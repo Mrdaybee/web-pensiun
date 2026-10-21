@@ -54,7 +54,6 @@
         th { background-color: rgba(15, 23, 42, 0.5); color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
         tr:last-child td { border-bottom: none; }
         tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
-        .badge { background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
         .text-right { text-align: right; }
         .val-idr { font-weight: 600; color: #e2e8f0; }
         .val-usdt { font-weight: 700; color: #2dd4bf; }
@@ -83,7 +82,6 @@
         <button id="tabBtnBtc" class="tab-btn" onclick="switchTab('btc')"><i class="fa-brands fa-bitcoin"></i> Aset Bitcoin (BTC)</button>
     </div>
 
-    <!-- SECTION USDT -->
     <div id="sectionUsdt">
         <div class="header">
             <div>
@@ -114,17 +112,16 @@
         </div>
     </div>
 
-    <!-- SECTION BTC (Format Baru) -->
     <div id="sectionBtc" class="hidden">
         <div class="header">
             <div>
                 <h1><i class="fa-brands fa-bitcoin" style="color: #f97316;"></i> Aset Bitcoin</h1>
-                <p>Sistem cerdas pelacak transaksi Bitcoin Anda (Format Exchange).</p>
+                <p>Sistem cerdas pelacak transaksi Bitcoin Anda.</p>
             </div>
         </div>
         <div class="dashboard">
-            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-coins"></i> Total USDT Terpakai</div><div class="card-value" id="totalUsdtBtc">0.0000 USDT</div></div>
-            <div class="card btc"><div class="card-title"><i class="fa-brands fa-bitcoin"></i> Total BTC Didapat</div><div class="card-value" id="totalBtc">0.00000000 BTC</div></div>
+            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-coins"></i> Total Pengeluaran (USDT)</div><div class="card-value" id="totalUsdtSpent">0.0000 USDT</div></div>
+            <div class="card btc"><div class="card-title"><i class="fa-brands fa-bitcoin"></i> Total BTC</div><div class="card-value" id="totalBtc">0.00000000 BTC</div></div>
             <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTxBtc">0</div></div>
         </div>
         <div class="upload-section" onclick="document.getElementById('fileInputBtc').click()">
@@ -139,17 +136,7 @@
         </div>
         <div class="table-container">
             <table>
-                <thead>
-                    <tr>
-                        <th>Tanggal</th>
-                        <th>Pair</th>
-                        <th>Order ID</th>
-                        <th class="text-right">Harga (USDT)</th>
-                        <th class="text-right">Total USDT</th>
-                        <th class="text-right">Total BTC</th>
-                        <th style="text-align: center;">Aksi</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Tanggal</th><th>Merchant</th><th>Order ID</th><th class="text-right">Nominal (USDT)</th><th class="text-right">BTC</th><th style="text-align: center;">Aksi</th></tr></thead>
                 <tbody id="tableBodyBtc"></tbody>
             </table>
         </div>
@@ -215,50 +202,64 @@
     function parseTransactionText(text, type) {
         const dateMatch = text.match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/);
         const date = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+        let merchant = "Unknown";
+        const knownMerchants = ["Cv_Rpl", "SUIFONG", "CENTURY_PRIME", "FreeNoFee", "SpeedyCashEXC", "ROFIQ_VIIP", "Men_fasttrade", "GuitarHero", "FARZ-EX"];
+        for (let m of knownMerchants) { if (text.includes(m)) { merchant = m; break; } }
         
+        if (type === 'btc' && merchant === "Unknown") merchant = "Exchange/Trading";
+
         if (type === 'usdt') {
             const idMatch = text.match(/\b(\d{17,20})\b/);
             const orderId = idMatch ? idMatch[1] : 'ID-' + Date.now();
+            
             const idrMatches = [...text.matchAll(/(\d{1,3}(?:\.\d{3})+)\s*IDR/g)];
             let idr = 0;
             if (idrMatches.length > 0) {
                 const amounts = idrMatches.map(m => parseInt(m[1].replace(/\./g, '')));
                 idr = Math.max(...amounts);
             }
+            
             const usdtMatch = text.match(/(\d+,\d+)\s*USDT/);
             const usdt = usdtMatch ? parseFloat(usdtMatch[1].replace(',', '.')) : 0;
-            let merchant = "Unknown";
-            const knownMerchants = ["Cv_Rpl", "SUIFONG", "CENTURY_PRIME", "FreeNoFee", "SpeedyCashEXC", "ROFIQ_VIIP", "Men_fasttrade", "GuitarHero", "FARZ-EX"];
-            for (let m of knownMerchants) { if (text.includes(m)) { merchant = m; break; } }
 
             if (idr === 0 || usdt === 0) return null;
             return { date, merchant, order_id: orderId, idr, usdt };
         } else {
-            // --- PARSER KHUSUS BTC EXCHANGE ---
-            const pair = "BTC/USDT";
-            
-            // Ambil ID Pesanan (8 digit atau lebih)
-            const idMatch = text.match(/(?:ID Pesanan|ID Transaksi)\s*([\d]+)/i) || text.match(/\b(\d{8,20})\b/);
+            // LOGIKA BTC (Hitung USDT = Harga x BTC)
+            const idMatch = text.match(/(?:ID Pesanan|ID Transaksi)\s*([\d]+)/i);
             const orderId = idMatch ? idMatch[1] : 'BTC-' + Date.now();
 
-            // Ambil Harga (biasanya di bawah "Harga Order" atau "Harga yang Terpenuhi")
-            const priceMatch = text.match(/(?:Harga Order|Harga yang Terpenuhi)\s*([\d,.]+)/i);
-            const price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : 0;
-
-            // Ambil Total USDT (Nilai yang Terpenuhi)
-            const usdtMatch = text.match(/Nilai yang Terpenuhi\s*([\d,.]+)\s*USDT/i);
-            const usdt_spent = usdtMatch ? parseFloat(usdtMatch[1].replace(/,/g, '')) : 0;
-
-            // Ambil Total BTC (Jumlah Pesanan / Kuantitas yang Diperdagangkan)
-            const btcMatches = [...text.matchAll(/(?:Jumlah Pesanan|Kuantitas yang Diperdagangkan)\s*([\d.,]+)\s*BTC/gi)];
-            let btc_received = 0;
+            // Ambil BTC Amount
+            let btc = 0;
+            const btcMatches = [...text.matchAll(/([\d.,]+)\s*BTC/gi)];
             if (btcMatches.length > 0) {
                 const values = btcMatches.map(m => parseFloat(m[1].replace(/,/g, '')));
-                btc_received = Math.max(...values);
+                btc = Math.max(...values); // Ambil yang paling besar (biasanya jumlah beli, bukan fee)
             }
 
-            if (btc_received === 0) return null;
-            return { date, pair, order_id: orderId, price, usdt_spent, btc_received };
+            // Ambil Harga BTC (Price)
+            let price = 0;
+            const priceMatch = text.match(/(?:Harga Order|Harga yang Terpenuhi)\s*([\d.,]+)/i);
+            if (priceMatch) {
+                price = parseFloat(priceMatch[1].replace(/,/g, ''));
+            }
+
+            // Kalkulasi USDT
+            let usdt_spent = 0;
+            if (price > 0 && btc > 0) {
+                usdt_spent = price * btc;
+            } else {
+                // Fallback kalau harga nggak kebaca, ambil dari "Nilai yang Terpenuhi"
+                const usdtMatches = [...text.matchAll(/([\d.,]+)\s*USDT/gi)];
+                if (usdtMatches.length > 0) {
+                    const values = usdtMatches.map(m => parseFloat(m[1].replace(/,/g, '')));
+                    usdt_spent = Math.max(...values);
+                }
+            }
+
+            if (btc === 0 || usdt_spent === 0) return null;
+            return { date, merchant, order_id: orderId, usdt_spent, btc };
         }
     }
 
@@ -304,70 +305,66 @@
     function renderTableBtc(transactions) {
         const tbody = document.getElementById('tableBodyBtc');
         tbody.innerHTML = '';
-        let totalUsdt = 0, totalBtc = 0;
-        if (transactions.length === 0) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data.</td></tr>`;
+        let totalUsdtSpent = 0, totalAsset = 0;
+        if (transactions.length === 0) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data.</td></tr>`;
         
         transactions.forEach(tx => {
-            totalUsdt += Number(tx.usdt_spent);
-            totalBtc += Number(tx.btc_received);
+            totalUsdtSpent += Number(tx.usdt_spent);
+            totalAsset += Number(tx.btc);
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
-                <td><strong style="color: #e2e8f0;">${tx.pair}</strong></td>
+                <td><strong style="color: #e2e8f0;">${tx.merchant}</strong></td>
                 <td style="font-family: monospace; color: #64748b; font-size: 13px;">${tx.order_id}</td>
-                <td class="text-right" style="color:#94a3b8;">${Number(tx.price).toLocaleString('id-ID')}</td>
-                <td class="text-right val-usdt">${Number(tx.usdt_spent).toLocaleString('id-ID', {minimumFractionDigits: 4})}</td>
-                <td class="text-right val-btc">${Number(tx.btc_received).toLocaleString('id-ID', {minimumFractionDigits: 8})}</td>
+                <td class="text-right val-usdt">${Number(tx.usdt_spent).toLocaleString('id-ID', {minimumFractionDigits: 4})} USDT</td>
+                <td class="text-right val-btc">${Number(tx.btc).toLocaleString('id-ID', {minimumFractionDigits: 8})}</td>
                 <td><div class="action-btns">
-                    <button class="btn-edit" onclick="editTxBtc(${tx.id}, '${tx.pair}', ${tx.price}, ${tx.usdt_spent}, ${tx.btc_received})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-edit" onclick="editTxBtc(${tx.id}, '${tx.merchant}', ${tx.usdt_spent}, ${tx.btc})"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions_btc')"><i class="fa-solid fa-xmark"></i></button>
                 </div></td>`;
             tbody.appendChild(tr);
         });
         document.getElementById('totalTxBtc').innerText = transactions.length;
-        document.getElementById('totalUsdtBtc').innerText = totalUsdt.toLocaleString('id-ID', {minimumFractionDigits: 4}) + ' USDT';
-        document.getElementById('totalBtc').innerText = totalBtc.toLocaleString('id-ID', {minimumFractionDigits: 8}) + ' BTC';
+        document.getElementById('totalUsdtSpent').innerText = totalUsdtSpent.toLocaleString('id-ID', {minimumFractionDigits: 4}) + ' USDT';
+        document.getElementById('totalBtc').innerText = totalAsset.toLocaleString('id-ID', {minimumFractionDigits: 8}) + ' BTC';
     }
 
-    // Edit USDT
-    async function editTx(id, table, oldMerchant, oldIdr, oldAsset, type) {
+    async function editTx(id, table, oldMerchant, oldIdr, oldUsdt, type) {
         let newMerchant = prompt("Edit Nama Merchant:", oldMerchant);
         if (newMerchant === null) return;
         if (newMerchant.trim() === "") newMerchant = oldMerchant;
 
-        let newIdr = prompt("Edit Nominal IDR (Angka saja):", oldIdr);
+        let newIdr = prompt("Edit Nominal IDR:", oldIdr);
         if (newIdr === null) return;
         newIdr = parseInt(newIdr.replace(/\./g, ''));
         if (isNaN(newIdr)) newIdr = oldIdr;
 
-        let newAsset = prompt("Edit Nominal USDT:", oldAsset);
-        if (newAsset === null) return;
-        newAsset = parseFloat(newAsset.replace(',', '.'));
-        if (isNaN(newAsset)) newAsset = oldAsset;
+        let newUsdt = prompt("Edit Nominal USDT:", oldUsdt);
+        if (newUsdt === null) return;
+        newUsdt = parseFloat(newUsdt.replace(',', '.'));
+        if (isNaN(newUsdt)) newUsdt = oldUsdt;
 
-        const { error } = await supabaseClient.from(table).update({ merchant: newMerchant, idr: newIdr, usdt: newAsset }).eq('id', id);
+        const { error } = await supabaseClient.from(table).update({ merchant: newMerchant, idr: newIdr, usdt: newUsdt }).eq('id', id);
         if (error) showToast("Gagal update", true);
         else { showToast("Berhasil diupdate!"); fetchData(); }
     }
 
-    // Edit BTC
-    async function editTxBtc(id, oldPair, oldPrice, oldUsdt, oldBtc) {
-        let newPrice = prompt("Edit Harga (USDT):", oldPrice);
-        if (newPrice === null) return;
-        newPrice = parseFloat(newPrice.replace(/,/g, ''));
-        if (isNaN(newPrice)) newPrice = oldPrice;
+    async function editTxBtc(id, oldMerchant, oldUsdtSpent, oldBtc) {
+        let newMerchant = prompt("Edit Nama Merchant:", oldMerchant);
+        if (newMerchant === null) return;
+        if (newMerchant.trim() === "") newMerchant = oldMerchant;
 
-        let newUsdt = prompt("Edit Total USDT Terpakai:", oldUsdt);
-        if (newUsdt === null) return;
-        newUsdt = parseFloat(newUsdt.replace(/,/g, ''));
-        if (isNaN(newUsdt)) newUsdt = oldUsdt;
+        let newUsdtSpent = prompt("Edit Nominal USDT:", oldUsdtSpent);
+        if (newUsdtSpent === null) return;
+        newUsdtSpent = parseFloat(newUsdtSpent.replace(',', '.'));
+        if (isNaN(newUsdtSpent)) newUsdtSpent = oldUsdtSpent;
 
-        let newBtc = prompt("Edit Total BTC Didapat:", oldBtc);
+        let newBtc = prompt("Edit Nominal BTC:", oldBtc);
         if (newBtc === null) return;
-        newBtc = parseFloat(newBtc.replace(/,/g, ''));
+        newBtc = parseFloat(newBtc.replace(',', '.'));
         if (isNaN(newBtc)) newBtc = oldBtc;
 
-        const { error } = await supabaseClient.from('transactions_btc').update({ price: newPrice, usdt_spent: newUsdt, btc_received: newBtc }).eq('id', id);
+        const { error } = await supabaseClient.from('transactions_btc').update({ merchant: newMerchant, usdt_spent: newUsdtSpent, btc: newBtc }).eq('id', id);
         if (error) showToast("Gagal update", true);
         else { showToast("Berhasil diupdate!"); fetchData(); }
     }
