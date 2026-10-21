@@ -136,7 +136,7 @@
         </div>
         <div class="table-container">
             <table>
-                <thead><tr><th>Tanggal</th><th>Merchant</th><th>Order ID</th><th class="text-right">Nominal (USDT)</th><th class="text-right">BTC</th><th style="text-align: center;">Aksi</th></tr></thead>
+                <thead><tr><th>Tanggal</th><th>Merchant</th><th>Order ID</th><th class="text-right">Harga (USDT)</th><th class="text-right">Nominal (USDT)</th><th class="text-right">BTC</th><th style="text-align: center;">Aksi</th></tr></thead>
                 <tbody id="tableBodyBtc"></tbody>
             </table>
         </div>
@@ -170,7 +170,6 @@
         setTimeout(() => { toast.className = ''; }, 4000);
     }
 
-    // Fungsi pembersih format angka (handle 82,000 / 82.000 / 0,000172 / 0.000172)
     function cleanNumber(str) {
         if (!str) return 0;
         str = str.trim();
@@ -278,7 +277,7 @@
             // 3. Hitung USDT
             let usdt_spent = price * btc;
 
-            // 4. Fallback cari teks USDT langsung
+            // 4. Fallback
             if (usdt_spent === 0 || isNaN(usdt_spent)) {
                 const usdtMatch = text.match(/(?:Nilai yang Terpenuhi|Total)\s*([\d.,]+)\s*USDT/i);
                 if (usdtMatch) {
@@ -289,7 +288,7 @@
             console.log("Debug BTC -> Harga:", price, "| BTC:", btc, "| USDT:", usdt_spent);
 
             if (btc === 0) return null;
-            return { date, merchant, order_id: orderId, usdt_spent, btc };
+            return { date, merchant, order_id: orderId, price_btc: price, usdt_spent, btc };
         }
     }
 
@@ -336,7 +335,7 @@
         const tbody = document.getElementById('tableBodyBtc');
         tbody.innerHTML = '';
         let totalUsdtSpent = 0, totalAsset = 0;
-        if (transactions.length === 0) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data.</td></tr>`;
+        if (transactions.length === 0) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data.</td></tr>`;
         
         transactions.forEach(tx => {
             totalUsdtSpent += Number(tx.usdt_spent);
@@ -346,10 +345,11 @@
                 <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
                 <td><strong style="color: #e2e8f0;">${tx.merchant}</strong></td>
                 <td style="font-family: monospace; color: #64748b; font-size: 13px;">${tx.order_id}</td>
+                <td class="text-right val-usdt">${Number(tx.price_btc || 0).toLocaleString('id-ID')}</td>
                 <td class="text-right val-usdt">${Number(tx.usdt_spent).toLocaleString('id-ID', {minimumFractionDigits: 4})} USDT</td>
                 <td class="text-right val-btc">${Number(tx.btc).toLocaleString('id-ID', {minimumFractionDigits: 8})}</td>
                 <td><div class="action-btns">
-                    <button class="btn-edit" onclick="editTxBtc(${tx.id}, '${tx.merchant}', ${tx.usdt_spent}, ${tx.btc})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-edit" onclick="editTxBtc(${tx.id}, '${tx.merchant}', ${tx.price_btc || 0}, ${tx.usdt_spent}, ${tx.btc})"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions_btc')"><i class="fa-solid fa-xmark"></i></button>
                 </div></td>`;
             tbody.appendChild(tr);
@@ -379,10 +379,15 @@
         else { showToast("Berhasil diupdate!"); fetchData(); }
     }
 
-    async function editTxBtc(id, oldMerchant, oldUsdtSpent, oldBtc) {
+    async function editTxBtc(id, oldMerchant, oldPrice, oldUsdtSpent, oldBtc) {
         let newMerchant = prompt("Edit Nama Merchant:", oldMerchant);
         if (newMerchant === null) return;
         if (newMerchant.trim() === "") newMerchant = oldMerchant;
+
+        let newPrice = prompt("Edit Harga BTC:", oldPrice);
+        if (newPrice === null) return;
+        newPrice = parseFloat(newPrice.replace(/\./g, ''));
+        if (isNaN(newPrice)) newPrice = oldPrice;
 
         let newUsdtSpent = prompt("Edit Nominal USDT:", oldUsdtSpent);
         if (newUsdtSpent === null) return;
@@ -394,7 +399,7 @@
         newBtc = parseFloat(newBtc.replace(',', '.'));
         if (isNaN(newBtc)) newBtc = oldBtc;
 
-        const { error } = await supabaseClient.from('transactions_btc').update({ merchant: newMerchant, usdt_spent: newUsdtSpent, btc: newBtc }).eq('id', id);
+        const { error } = await supabaseClient.from('transactions_btc').update({ merchant: newMerchant, price_btc: newPrice, usdt_spent: newUsdtSpent, btc: newBtc }).eq('id', id);
         if (error) showToast("Gagal update", true);
         else { showToast("Berhasil diupdate!"); fetchData(); }
     }
