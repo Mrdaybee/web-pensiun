@@ -291,9 +291,11 @@
         const btn = document.getElementById('btnRefresh');
         btn.classList.add('loading');
         try {
-            // Ambil harga USDT/IDR dan BTC/USDT dari CoinGecko
-            const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether&vs_currencies=usdt,idr');
-            if (!response.ok) throw new Error('Gagal mengambil data dari API');
+            // Cache buster pakai timestamp
+            const url = `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether&vs_currencies=usdt,idr&t=${Date.now()}`;
+            const response = await fetch(url, { method: 'GET', mode: 'cors' });
+            
+            if (!response.ok) throw new Error('API Error');
             
             const json = await response.json();
             
@@ -301,9 +303,10 @@
             if (json.bitcoin && json.bitcoin.usdt) livePrice.btcUsdt = json.bitcoin.usdt;
             
             updateDashboardSummary();
+            showToast("Harga berhasil diupdate!");
         } catch (error) {
             console.error("Gagal ambil harga live:", error);
-            showToast("Gagal update harga live", true);
+            showToast("Gagal update harga live. Koneksi/API terblokir.", true);
         } finally {
             btn.classList.remove('loading');
         }
@@ -593,7 +596,6 @@
                 </div></td>`;
             tbody.appendChild(tr);
         });
-        document.getElementById('totalTx').innerText = transactions.length;
     }
 
     function renderTableBtc(transactions) {
@@ -616,7 +618,6 @@
                 </div></td>`;
             tbody.appendChild(tr);
         });
-        document.getElementById('totalTxBtc').innerText = transactions.length;
     }
 
     async function deleteTx(id, table) {
