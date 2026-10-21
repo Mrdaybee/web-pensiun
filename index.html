@@ -70,10 +70,24 @@
         .btn-clear:hover { border-color: var(--danger); color: var(--danger); }
         .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .table-header h2 { font-size: 18px; font-weight: 600; }
+        
         #toast { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); font-weight: 600; font-size: 14px; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; z-index: 1000; }
         #toast.show { transform: translateY(0); opacity: 1; }
         #toast.error { background: var(--danger); }
         .hidden { display: none; }
+
+        /* MODAL STYLES */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-content { background: var(--card-bg); width: 90%; max-width: 500px; border-radius: 16px; border: 1px solid var(--border); padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .modal-content h2 { font-size: 20px; margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px; }
+        .form-group input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 15px; border-radius: 8px; font-size: 14px; outline: none; }
+        .form-group input:focus { border-color: var(--primary); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+        .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-save { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-save:hover { background: #2563eb; }
     </style>
 </head>
 <body>
@@ -143,431 +157,27 @@
         </div>
     </div>
 </div>
-<div id="toast"><i class="fa-solid fa-check-circle"></i> <span>Berhasil!</span></div>
-<script>
-    const SUPABASE_URL = 'https://vbkpvhyizdrlzxehojzw.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_ebHFFHrTowLkOCJXEbClBw_MrE6t0hs';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    function switchTab(tab) {
-        if(tab === 'usdt') {
-            document.getElementById('sectionUsdt').classList.remove('hidden');
-            document.getElementById('sectionBtc').classList.add('hidden');
-            document.getElementById('tabBtnUsdt').className = 'tab-btn active';
-            document.getElementById('tabBtnBtc').className = 'tab-btn';
-        } else {
-            document.getElementById('sectionUsdt').classList.add('hidden');
-            document.getElementById('sectionBtc').classList.remove('hidden');
-            document.getElementById('tabBtnUsdt').className = 'tab-btn';
-            document.getElementById('tabBtnBtc').className = 'tab-btn active-btc';
-        }
-    }
-
-    function showToast(message, isError = false) {
-        const toast = document.getElementById('toast');
-        toast.className = isError ? 'show error' : 'show';
-        toast.querySelector('span').innerText = message;
-        toast.querySelector('i').className = isError ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-check-circle';
-        setTimeout(() => { toast.className = ''; }, 4000);
-    }
-
-    function cleanNumber(str) {
-        if (!str) return 0;
-        str = str.trim();
-        if (str.includes(',') && str.includes('.')) {
-            return parseFloat(str.replace(/\./g, '').replace(',', '.'));
-        }
-        if (str.includes(',')) {
-            return parseFloat(str.replace(',', '.'));
-        }
-        return parseFloat(str);
-    }
-
-    document.getElementById('fileInputUsdt').addEventListener('change', function(e) { handleFiles(this.files, 'usdt'); });
-    document.getElementById('fileInputBtc').addEventListener('change', function(e) { handleFiles(this.files, 'btc'); });
-
-    async function handleFiles(files, type) {
-        if (files.length === 0) return;
-        const statusDiv = document.getElementById(type === 'usdt' ? 'statusTextUsdt' : 'statusTextBtc');
-        statusDiv.classList.add('active');
-        const worker = await Tesseract.createWorker('ind+eng');
-
-        for (let i = 0; i < files.length; i++) {
-            statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses gambar ${i + 1} dari ${files.length}...`;
-            try {
-                const { data: { text } } = await worker.recognize(files[i]);
-                const parsedData = parseTransactionText(text, type);
-                
-                if (parsedData) {
-                    const table = type === 'usdt' ? 'transactions' : 'transactions_btc';
-                    const { error } = await supabaseClient.from(table).insert([parsedData]);
-                    if (error) {
-                        console.log("Supabase Error:", error);
-                        showToast("Error DB: " + error.message, true);
-                    } else {
-                        showToast("Transaksi " + type.toUpperCase() + " tersimpan!");
-                    }
-                } else {
-                    showToast("Gagal baca gambar " + type.toUpperCase(), true);
-                }
-            } catch (error) { 
-                console.error("Error scan:", error); 
-                showToast("Sistem Error", true);
-            }
-        }
-        await worker.terminate();
-        statusDiv.classList.remove('active');
-        document.getElementById(type === 'usdt' ? 'fileInputUsdt' : 'fileInputBtc').value = '';
-        fetchData();
-    }
-
-    function parseTransactionText(text, type) {
-        if (type === 'usdt') {
-            const dateMatch = text.match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/);
-            const date = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 16).replace('T', ' ');
-
-            let merchant = "Unknown";
-            const knownMerchants = ["Cv_Rpl", "SUIFONG", "CENTURY_PRIME", "FreeNoFee", "SpeedyCashEXC", "ROFIQ_VIIP", "Men_fasttrade", "GuitarHero", "FARZ-EX"];
-            for (let m of knownMerchants) { if (text.includes(m)) { merchant = m; break; } }
-
-            const idMatch = text.match(/\b(\d{17,20})\b/);
-            const orderId = idMatch ? idMatch[1] : 'ID-' + Date.now();
-            
-            const idrMatches = [...text.matchAll(/(\d{1,3}(?:\.\d{3})+)\s*IDR/g)];
-            let idr = 0;
-            if (idrMatches.length > 0) {
-                const amounts = idrMatches.map(m => parseInt(m[1].replace(/\./g, '')));
-                idr = Math.max(...amounts);
-            }
-            
-            const usdtMatch = text.match(/(\d+,\d+)\s*USDT/);
-            const usdt = usdtMatch ? parseFloat(usdtMatch[1].replace(',', '.')) : 0;
-
-            if (idr === 0 || usdt === 0) return null;
-            return { date, merchant, order_id: orderId, idr, usdt };
-        } else {
-            // --- LOGIKA BTC BARU (FOKUS RIWAYAT TERISI) ---
-            
-            // 1. ID Pesanan (Ambil dari ATAS)
-            const idMatch = text.match(/(?:ID Pesanan)\s*([\d]+)/i);
-            const orderId = idMatch ? idMatch[1] : 'BTC-' + Date.now();
-
-            // 2. Waktu Terpenuhi (Tanggal)
-            const dateMatch = text.match(/(?:Waktu Terpenuhi)\s*(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/i);
-            const date = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 16).replace('T', ' ');
-
-            // 3. Harga yang Terpenuhi
-            let price = 0;
-            const priceMatch = text.match(/(?:Harga yang Terpenuhi)\s*([\d.,]+)/i);
-            if (priceMatch) price = cleanNumber(priceMatch[1]);
-
-            // 4. Kuantitas yang Diperdagangkan (BTC)
-            let btc = 0;
-            const btcMatch = text.match(/(?:Kuantitas yang Diperdagangkan)\s*([\d.,]+)\s*BTC/i);
-            if (btcMatch) btc = cleanNumber(btcMatch[1]);
-
-            // 5. Nilai yang Terpenuhi (USDT)
-            let usdt_spent = 0;
-            const usdtMatch = text.match(/(?:Nilai yang Terpenuhi)\s*([\d.,]+)\s*USDT/i);
-            if (usdtMatch) usdt_spent = cleanNumber(usdtMatch[1]);
-
-            // 6. Biaya
-            let fee = "0 BTC";
-            const feeMatch = text.match(/(?:Biaya)\s*([\d.,]+\s*BTC)/i);
-            if (feeMatch) fee = feeMatch[1].trim().replace(/\s+/g, ' ');
-
-            // Paksa USDT jadi 4 desimal
-            usdt_spent = parseFloat(usdt_spent.toFixed(4));
-
-            console.log("Debug OCR:", { orderId, date, price, btc, usdt_spent, fee });
-
-            // Validasi wajib ada BTC dan USDT
-            if (btc === 0 || usdt_spent === 0) return null;
-            
-            // Simpan fee di kolom merchant
-            return { date, merchant: fee, order_id: orderId, price_btc: price, usdt_spent, btc };
-        }
-    }
-
-    async function fetchData() {
-        try {
-            const { data } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
-            renderTableUsdt(data);
-        } catch (e) { console.error(e); }
-
-        try {
-            const { data } = await supabaseClient.from('transactions_btc').select('*').order('date', { ascending: false });
-            renderTableBtc(data);
-        } catch (e) { console.error(e); }
-    }
-
-    function renderTableUsdt(transactions) {
-        const tbody = document.getElementById('tableBodyUsdt');
-        tbody.innerHTML = '';
-        let totalIdr = 0, totalAsset = 0;
-        if (transactions.length === 0) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data.</td></tr>`;
-        
-        transactions.forEach(tx => {
-            totalIdr += Number(tx.idr);
-            totalAsset += Number(tx.usdt);
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
-                <td><strong style="color: #e2e8f0;">${tx.merchant}</strong></td>
-                <td style="font-family: monospace; color: #64748b; font-size: 13px;">${tx.order_id}</td>
-                <td class="text-right val-idr">Rp ${Number(tx.idr).toLocaleString('id-ID')}</td>
-                <td class="text-right val-usdt">${Number(tx.usdt).toLocaleString('id-ID', {minimumFractionDigits: 4})}</td>
-                <td><div class="action-btns">
-                    <button class="btn-edit" onclick="editTx(${tx.id}, 'transactions', '${tx.merchant}', ${tx.idr}, ${tx.usdt}, 'usdt')"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions')"><i class="fa-solid fa-xmark"></i></button>
-                </div></td>`;
-            tbody.appendChild(tr);
-        });
-        document.getElementById('totalTx').innerText = transactions.length;
-        document.getElementById('totalIdr').innerText = 'Rp ' + totalIdr.toLocaleString('id-ID');
-        document.getElementById('totalUsdt').innerText = totalAsset.toLocaleString('id-ID', {minimumFractionDigits: 4}) + ' USDT';
-    }
-
-    function renderTableBtc(transactions) {
-        const tbody = document.getElementById('tableBodyBtc');
-        tbody.innerHTML = '';
-        let totalUsdtSpent = 0, totalAsset = 0;
-        if (transactions.length === 0) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data.</td></tr>`;
-        
-        transactions.forEach(tx => {
-            totalUsdtSpent += Number(tx.usdt_spent);
-            totalAsset += Number(tx.btc);
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
-                <td class="val-fee">${tx.merchant}</td> 
-                <td style="font-family: monospace; color: #64748b; font-size: 13px;">${tx.order_id}</td>
-                <td class="text-right val-usdt">${Number(tx.price_btc || 0).toLocaleString('id-ID')}</td>
-                <td class="text-right val-usdt">${Number(tx.usdt_spent).toLocaleString('id-ID', {minimumFractionDigits: 4})} USDT</td>
-                <td class="text-right val-btc">${Number(tx.btc).toLocaleString('id-ID', {minimumFractionDigits: 8})}</td>
-                <td><div class="action-btns">
-                    <button class="btn-edit" onclick="editTxBtc(${tx.id}, '${tx.merchant}', ${tx.price_btc || 0}, ${tx.usdt_spent}, ${tx.btc})"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions_btc')"><i class="fa-solid fa-xmark"></i></button>
-                </div></td>`;
-            tbody.appendChild(tr);
-        });
-        document.getElementById('totalTxBtc').innerText = transactions.length;
-        document.getElementById('totalUsdtSpent').innerText = totalUsdtSpent.toLocaleString('id-ID', {minimumFractionDigits: 4}) + ' USDT';
-        document.getElementById('totalBtc').innerText = totalAsset.toLocaleString('id-ID', {minimumFractionDigits: 8}) + ' BTC';
-    }
-
-    async function editTx(id, table, oldMerchant, oldIdr, oldUsdt, type) {
-        let newMerchant = prompt("Edit Nama Merchant:", oldMerchant);
-        if (newMerchant === null) return;
-        if (newMerchant.trim() === "") newMerchant = oldMerchant;
-
-        let newIdr = prompt("Edit Nominal IDR:", oldIdr);
-        if (newIdr === null) return;
-        newIdr = parseInt(newIdr.replace(/\./g, ''));
-        if (isNaN(newIdr)) newIdr = oldIdr;
-
-        let newUsdt = prompt("Edit Nominal USDT:", oldUsdt);
-        if (newUsdt === null) return;
-        newUsdt = parseFloat(newUsdt.replace(',', '.'));
-        if (isNaN(newUsdt)) newUsdt = oldUsdt;
-
-        const { error } = await supabaseClient.from(table).update({ merchant: newMerchant, idr: newIdr, usdt: newUsdt }).eq('id', id);
-        if (error) showToast("Gagal update", true);
-        else { showToast("Berhasil diupdate!"); fetchData(); }
-    }
-
-    async function editTxBtc(id, oldFee, oldPrice, oldUsdtSpent, oldBtc) {
-        let newFee = prompt("Edit Biaya (Fee):", oldFee);
-        if (newFee === null) return;
-        if (newFee.trim() === "") newFee = oldFee;
-
-        let newPrice = prompt("Edit Harga BTC:", oldPrice);
-        if (newPrice === null) return;
-        newPrice = parseFloat(newPrice.replace(/\./g, ''));
-        if (isNaN(newPrice)) newPrice = oldPrice;
-
-        let newUsdtSpent = prompt("Edit Nominal USDT:", oldUsdtSpent);
-        if (newUsdtSpent === null) return;
-        newUsdtSpent = parseFloat(newUsdtSpent.replace(',', '.'));
-        if (isNaN(newUsdtSpent)) newUsdtSpent = oldUsdtSpent;
-
-        let newBtc = prompt("Edit Nominal BTC:", oldBtc);
-        if (newBtc === null) return;
-        newBtc = parseFloat(newBtc.replace(',', '.'));
-        if (isNaN(newBtc)) newBtc = oldBtc;
-
-        const { error } = await supabaseClient.from('transactions_btc').update({ merchant: newFee, price_btc: newPrice, usdt_spent: newUsdtSpent, btc: newBtc }).eq('id', id);
-        if (error) showToast("Gagal update", true);
-        else { showToast("Berhasil diupdate!"); fetchData(); }
-    }
-
-    async function deleteTx(id, table) {
-        if(confirm("Hapus transaksi ini?")) {
-            await supabaseClient.from(table).delete().eq('id', id);
-            showToast("Dihapus"); fetchData();
-        }
-    }
-
-    async function clearAllData(table) {
-        if(confirm("Hapus SEMUA data di tabel ini?")) {
-            await supabaseClient.from(table).delete().gt('id', 0);
-            showToast("Semua data dibersihkan"); fetchData();
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', fetchData);
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Dana Pensiun</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root { --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; --text-muted: #94a3b8; --primary: #3b82f6; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --border: #334155; --gradient-1: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%); --gradient-2: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%); --gradient-3: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); --gradient-btc: linear-gradient(135deg, #f97316 0%, #eab308 100%); }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: var(--text); padding: 30px 20px; min-height: 100vh; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        
-        .tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-        .tab-btn { background: transparent; color: var(--text-muted); border: none; font-size: 18px; font-weight: 600; cursor: pointer; padding: 10px 20px; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
-        .tab-btn:hover { background: rgba(255,255,255,0.05); }
-        .tab-btn.active { background: var(--card-bg); color: var(--primary); border: 1px solid var(--border); }
-        .tab-btn.active-btc { background: var(--card-bg); color: #f97316; border: 1px solid var(--border); }
-        
-        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
-        .header h1 { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
-        .header p { color: var(--text-muted); margin-top: 5px; font-size: 14px; }
-        
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border); position: relative; overflow: hidden; transition: transform 0.3s ease; }
-        .card:hover { transform: translateY(-5px); }
-        .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
-        .card.idr::before { background: var(--gradient-1); }
-        .card.usdt::before { background: var(--gradient-2); }
-        .card.btc::before { background: var(--gradient-btc); }
-        .card.tx::before { background: var(--gradient-3); }
-        .card-title { color: var(--text-muted); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .card-value { font-size: 32px; font-weight: 700; }
-        .idr .card-value { color: #2dd4bf; }
-        .usdt .card-value { color: #d946ef; }
-        .btc .card-value { color: #f97316; }
-        .tx .card-value { color: #f59e0b; }
-        
-        .upload-section { background: var(--card-bg); border: 2px dashed var(--border); border-radius: 16px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s ease; margin-bottom: 30px; position: relative; }
-        .upload-section:hover, .upload-section.dragover { border-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
-        .upload-icon { font-size: 48px; color: var(--primary); margin-bottom: 15px; animation: float 3s ease-in-out infinite; }
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-        input[type="file"] { display: none; }
-        .status-text { margin-top: 15px; font-weight: 600; color: var(--primary); font-size: 14px; display: none; }
-        .status-text.active { display: block; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        
-        .table-container { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
-        th { background-color: rgba(15, 23, 42, 0.5); color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
-        .text-right { text-align: right; }
-        .val-idr { font-weight: 600; color: #e2e8f0; }
-        .val-usdt { font-weight: 700; color: #2dd4bf; }
-        .val-btc { font-weight: 700; color: #f97316; }
-        .val-fee { color: #94a3b8; font-size: 13px; }
-        
-        .action-btns { display: flex; gap: 8px; justify-content: center; }
-        .btn-edit { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
-        .btn-edit:hover { background: var(--warning); color: white; }
-        .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
-        .btn-delete:hover { background: var(--danger); color: white; }
-        
-        .btn-clear { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
-        .btn-clear:hover { border-color: var(--danger); color: var(--danger); }
-        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .table-header h2 { font-size: 18px; font-weight: 600; }
-        #toast { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); font-weight: 600; font-size: 14px; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; z-index: 1000; }
-        #toast.show { transform: translateY(0); opacity: 1; }
-        #toast.error { background: var(--danger); }
-        .hidden { display: none; }
-    </style>
-</head>
-<body>
-<div class="container">
-    <div class="tabs">
-        <button id="tabBtnUsdt" class="tab-btn active" onclick="switchTab('usdt')"><i class="fa-solid fa-dollar-sign"></i> Aset USDT</button>
-        <button id="tabBtnBtc" class="tab-btn" onclick="switchTab('btc')"><i class="fa-brands fa-bitcoin"></i> Aset Bitcoin (BTC)</button>
-    </div>
-
-    <div id="sectionUsdt">
-        <div class="header">
-            <div>
-                <h1><i class="fa-solid fa-dollar-sign" style="color: var(--primary);"></i> Aset USDT</h1>
-                <p>Sistem cerdas pelacak transaksi USDT Anda.</p>
-            </div>
-        </div>
-        <div class="dashboard">
-            <div class="card idr"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Pengeluaran</div><div class="card-value" id="totalIdr">Rp 0</div></div>
-            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-coins"></i> Total USDT</div><div class="card-value" id="totalUsdt">0.0000 USDT</div></div>
-            <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTx">0</div></div>
-        </div>
-        <div class="upload-section" onclick="document.getElementById('fileInputUsdt').click()">
-            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-            <h3>Tarik & Lepas Screenshot USDT di Sini</h3>
-            <input type="file" id="fileInputUsdt" accept="image/*" multiple>
-            <div class="status-text" id="statusTextUsdt"></div>
-        </div>
-        <div class="table-header">
-            <h2><i class="fa-solid fa-list-ul"></i> Riwayat Transaksi USDT</h2>
-            <button class="btn-clear" onclick="clearAllData('transactions')"><i class="fa-solid fa-trash"></i> Hapus Semua</button>
-        </div>
-        <div class="table-container">
-            <table>
-                <thead><tr><th>Tanggal</th><th>Merchant</th><th>Order ID</th><th class="text-right">Nominal (IDR)</th><th class="text-right">USDT</th><th style="text-align: center;">Aksi</th></tr></thead>
-                <tbody id="tableBodyUsdt"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="sectionBtc" class="hidden">
-        <div class="header">
-            <div>
-                <h1><i class="fa-brands fa-bitcoin" style="color: #f97316;"></i> Aset Bitcoin</h1>
-                <p>Sistem cerdas pelacak transaksi Bitcoin Anda.</p>
-            </div>
-        </div>
-        <div class="dashboard">
-            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-coins"></i> Total Pengeluaran (USDT)</div><div class="card-value" id="totalUsdtSpent">0.0000 USDT</div></div>
-            <div class="card btc"><div class="card-title"><i class="fa-brands fa-bitcoin"></i> Total BTC</div><div class="card-value" id="totalBtc">0.00000000 BTC</div></div>
-            <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTxBtc">0</div></div>
-        </div>
-        <div class="upload-section" onclick="document.getElementById('fileInputBtc').click()">
-            <i class="fa-solid fa-cloud-arrow-up upload-icon" style="color: #f97316;"></i>
-            <h3>Tarik & Lepas Screenshot BTC di Sini</h3>
-            <input type="file" id="fileInputBtc" accept="image/*" multiple>
-            <div class="status-text" id="statusTextBtc"></div>
-        </div>
-        <div class="table-header">
-            <h2><i class="fa-solid fa-list-ul"></i> Riwayat Transaksi Bitcoin</h2>
-            <button class="btn-clear" onclick="clearAllData('transactions_btc')"><i class="fa-solid fa-trash"></i> Hapus Semua</button>
-        </div>
-        <div class="table-container">
-            <table>
-                <thead><tr><th>Tanggal</th><th>Biaya</th><th>Order ID</th><th class="text-right">Harga (USDT)</th><th class="text-right">Nominal (USDT)</th><th class="text-right">BTC</th><th style="text-align: center;">Aksi</th></tr></thead>
-                <tbody id="tableBodyBtc"></tbody>
-            </table>
+<!-- MODAL KONFIRMASI -->
+<div id="confirmModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2><i class="fa-solid fa-clipboard-check"></i> Konfirmasi Data</h2>
+        <div id="modalForm"></div>
+        <div class="modal-actions">
+            <button onclick="resolveModal(false)" class="btn-cancel">Batal</button>
+            <button onclick="resolveModal(true)" class="btn-save">Simpan</button>
         </div>
     </div>
 </div>
+
 <div id="toast"><i class="fa-solid fa-check-circle"></i> <span>Berhasil!</span></div>
 <script>
     const SUPABASE_URL = 'https://vbkpvhyizdrlzxehojzw.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_ebHFFHrTowLkOCJXEbClBw_MrE6t0hs';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let modalResolver = null;
+    let currentEditData = null;
 
     function switchTab(tab) {
         if(tab === 'usdt') {
@@ -594,13 +204,59 @@
     function cleanNumber(str) {
         if (!str) return 0;
         str = str.trim();
-        if (str.includes(',') && str.includes('.')) {
-            return parseFloat(str.replace(/\./g, '').replace(',', '.'));
-        }
-        if (str.includes(',')) {
-            return parseFloat(str.replace(',', '.'));
-        }
+        if (str.includes(',') && str.includes('.')) return parseFloat(str.replace(/\./g, '').replace(',', '.'));
+        if (str.includes(',')) return parseFloat(str.replace(',', '.'));
         return parseFloat(str);
+    }
+
+    // --- LOGIKA MODAL KONFIRMASI ---
+    function askConfirmation(data, type) {
+        return new Promise((resolve) => {
+            modalResolver = resolve;
+            currentEditData = JSON.parse(JSON.stringify(data));
+            currentEditData._type = type;
+
+            let formHtml = `<div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${data.date}"></div>`;
+            
+            if (type === 'usdt') {
+                formHtml += `
+                    <div class="form-group"><label>Merchant:</label><input type="text" id="mMerchant" value="${data.merchant}"></div>
+                    <div class="form-group"><label>IDR:</label><input type="number" id="mIdr" value="${data.idr}"></div>
+                    <div class="form-group"><label>USDT:</label><input type="number" step="0.0001" id="mUsdt" value="${data.usdt}"></div>
+                `;
+            } else {
+                formHtml += `
+                    <div class="form-group"><label>Biaya (Fee):</label><input type="text" id="mMerchant" value="${data.merchant}"></div>
+                    <div class="form-group"><label>Harga BTC:</label><input type="number" step="0.1" id="mPrice" value="${data.price_btc}"></div>
+                    <div class="form-group"><label>Nominal USDT:</label><input type="number" step="0.0001" id="mUsdt" value="${data.usdt_spent}"></div>
+                    <div class="form-group"><label>BTC:</label><input type="number" step="0.00000001" id="mBtc" value="${data.btc}"></div>
+                `;
+            }
+
+            document.getElementById('modalForm').innerHTML = formHtml;
+            document.getElementById('confirmModal').classList.remove('hidden');
+        });
+    }
+
+    function resolveModal(isSave) {
+        document.getElementById('confirmModal').classList.add('hidden');
+        if (isSave) {
+            currentEditData.date = document.getElementById('mDate').value;
+            currentEditData.merchant = document.getElementById('mMerchant').value;
+            
+            if (currentEditData._type === 'usdt') {
+                currentEditData.idr = parseInt(document.getElementById('mIdr').value) || 0;
+                currentEditData.usdt = parseFloat(document.getElementById('mUsdt').value) || 0;
+            } else {
+                currentEditData.price_btc = parseFloat(document.getElementById('mPrice').value) || 0;
+                currentEditData.usdt_spent = parseFloat(document.getElementById('mUsdt').value) || 0;
+                currentEditData.btc = parseFloat(document.getElementById('mBtc').value) || 0;
+            }
+            delete currentEditData._type;
+            modalResolver(currentEditData);
+        } else {
+            modalResolver(null);
+        }
     }
 
     document.getElementById('fileInputUsdt').addEventListener('change', function(e) { handleFiles(this.files, 'usdt'); });
@@ -619,13 +275,19 @@
                 const parsedData = parseTransactionText(text, type);
                 
                 if (parsedData) {
-                    const table = type === 'usdt' ? 'transactions' : 'transactions_btc';
-                    const { error } = await supabaseClient.from(table).insert([parsedData]);
-                    if (error) {
-                        console.log("Supabase Error:", error);
-                        showToast("Error DB: " + error.message, true);
+                    // MUNCULKAN MODAL KONFIRMASI
+                    const confirmedData = await askConfirmation(parsedData, type);
+                    
+                    if (confirmedData) {
+                        const table = type === 'usdt' ? 'transactions' : 'transactions_btc';
+                        const { error } = await supabaseClient.from(table).insert([confirmedData]);
+                        if (error) {
+                            showToast("Error DB: " + error.message, true);
+                        } else {
+                            showToast("Transaksi " + type.toUpperCase() + " tersimpan!");
+                        }
                     } else {
-                        showToast("Transaksi " + type.toUpperCase() + " tersimpan!");
+                        showToast("Transaksi dibatalkan", true);
                     }
                 } else {
                     showToast("Gagal baca gambar " + type.toUpperCase(), true);
@@ -666,45 +328,33 @@
             if (idr === 0 || usdt === 0) return null;
             return { date, merchant, order_id: orderId, idr, usdt };
         } else {
-            // --- LOGIKA BTC BARU (FOKUS RIWAYAT TERISI) ---
-            
-            // 1. ID Pesanan (Ambil dari ATAS)
+            // LOGIKA BTC (FOKUS RIWAYAT TERISI)
             const idMatch = text.match(/(?:ID Pesanan)\s*([\d]+)/i);
             const orderId = idMatch ? idMatch[1] : 'BTC-' + Date.now();
 
-            // 2. Waktu Terpenuhi (Tanggal)
             const dateMatch = text.match(/(?:Waktu Terpenuhi)\s*(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/i);
             const date = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 16).replace('T', ' ');
 
-            // 3. Harga yang Terpenuhi
             let price = 0;
             const priceMatch = text.match(/(?:Harga yang Terpenuhi)\s*([\d.,]+)/i);
             if (priceMatch) price = cleanNumber(priceMatch[1]);
 
-            // 4. Kuantitas yang Diperdagangkan (BTC)
             let btc = 0;
             const btcMatch = text.match(/(?:Kuantitas yang Diperdagangkan)\s*([\d.,]+)\s*BTC/i);
             if (btcMatch) btc = cleanNumber(btcMatch[1]);
 
-            // 5. Nilai yang Terpenuhi (USDT)
             let usdt_spent = 0;
             const usdtMatch = text.match(/(?:Nilai yang Terpenuhi)\s*([\d.,]+)\s*USDT/i);
             if (usdtMatch) usdt_spent = cleanNumber(usdtMatch[1]);
 
-            // 6. Biaya
             let fee = "0 BTC";
             const feeMatch = text.match(/(?:Biaya)\s*([\d.,]+\s*BTC)/i);
             if (feeMatch) fee = feeMatch[1].trim().replace(/\s+/g, ' ');
 
-            // Paksa USDT jadi 4 desimal
             usdt_spent = parseFloat(usdt_spent.toFixed(4));
 
-            console.log("Debug OCR:", { orderId, date, price, btc, usdt_spent, fee });
-
-            // Validasi wajib ada BTC dan USDT
             if (btc === 0 || usdt_spent === 0) return null;
             
-            // Simpan fee di kolom merchant
             return { date, merchant: fee, order_id: orderId, price_btc: price, usdt_spent, btc };
         }
     }
