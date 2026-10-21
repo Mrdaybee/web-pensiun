@@ -14,7 +14,6 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: var(--text); padding: 30px 20px; min-height: 100vh; }
         .container { max-width: 1200px; margin: 0 auto; }
         
-        /* Tabs Menu */
         .tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
         .tab-btn { background: transparent; color: var(--text-muted); border: none; font-size: 18px; font-weight: 600; cursor: pointer; padding: 10px 20px; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
         .tab-btn:hover { background: rgba(255,255,255,0.05); }
@@ -79,13 +78,11 @@
 </head>
 <body>
 <div class="container">
-    <!-- TABS MENU -->
     <div class="tabs">
         <button id="tabBtnUsdt" class="tab-btn active" onclick="switchTab('usdt')"><i class="fa-brands fa-bitcoin"></i> Aset USDT</button>
         <button id="tabBtnBtc" class="tab-btn" onclick="switchTab('btc')"><i class="fa-brands fa-bitcoin"></i> Aset Bitcoin (BTC)</button>
     </div>
 
-    <!-- SECTION USDT -->
     <div id="sectionUsdt">
         <div class="header">
             <div>
@@ -116,7 +113,6 @@
         </div>
     </div>
 
-    <!-- SECTION BTC -->
     <div id="sectionBtc" class="hidden">
         <div class="header">
             <div>
@@ -153,7 +149,6 @@
     const SUPABASE_KEY = 'sb_publishable_ebHFFHrTowLkOCJXEbClBw_MrE6t0hs';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // --- LOGIKA TAB MENU ---
     function switchTab(tab) {
         if(tab === 'usdt') {
             document.getElementById('sectionUsdt').classList.remove('hidden');
@@ -176,7 +171,6 @@
         setTimeout(() => { toast.className = ''; }, 3000);
     }
 
-    // --- UPLOAD & OCR ---
     document.getElementById('fileInputUsdt').addEventListener('change', function(e) { handleFiles(this.files, 'usdt'); });
     document.getElementById('fileInputBtc').addEventListener('change', function(e) { handleFiles(this.files, 'btc'); });
 
@@ -207,46 +201,71 @@
     }
 
     function parseTransactionText(text, type) {
-        const idMatch = text.match(/\b(\d{17,20})\b/);
-        const orderId = idMatch ? idMatch[1] : 'ID-' + Date.now();
-        
-        const idrMatches = [...text.matchAll(/(\d{1,3}(?:\.\d{3})+)\s*IDR/g)];
-        let idr = 0;
-        if (idrMatches.length > 0) {
-            const amounts = idrMatches.map(m => parseInt(m[1].replace(/\./g, '')));
-            idr = Math.max(...amounts);
-        }
-        
+        // Ambil Tanggal
         const dateMatch = text.match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/);
         const date = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 16).replace('T', ' ');
-        
+
+        // Ambil Merchant
         let merchant = "Unknown";
         const knownMerchants = ["Cv_Rpl", "SUIFONG", "CENTURY_PRIME", "FreeNoFee", "SpeedyCashEXC", "ROFIQ_VIIP", "Men_fasttrade", "GuitarHero", "FARZ-EX"];
         for (let m of knownMerchants) { if (text.includes(m)) { merchant = m; break; } }
+        
+        // Khusus BTC yang dari Exchange, nama merchant biasanya ga ada. Kita set default.
+        if (type === 'btc' && merchant === "Unknown") merchant = "Exchange/Trading";
 
         if (type === 'usdt') {
-            const match = text.match(/(\d+,\d+)\s*USDT/);
-            const val = match ? parseFloat(match[1].replace(',', '.')) : 0;
-            if (idr === 0 || val === 0) return null;
-            return { date, merchant, order_id: orderId, idr, usdt: val };
+            const idMatch = text.match(/\b(\d{17,20})\b/);
+            const orderId = idMatch ? idMatch[1] : 'ID-' + Date.now();
+            
+            const idrMatches = [...text.matchAll(/(\d{1,3}(?:\.\d{3})+)\s*IDR/g)];
+            let idr = 0;
+            if (idrMatches.length > 0) {
+                const amounts = idrMatches.map(m => parseInt(m[1].replace(/\./g, '')));
+                idr = Math.max(...amounts);
+            }
+            
+            const usdtMatch = text.match(/(\d+,\d+)\s*USDT/);
+            const usdt = usdtMatch ? parseFloat(usdtMatch[1].replace(',', '.')) : 0;
+
+            if (idr === 0 || usdt === 0) return null;
+            return { date, merchant, order_id: orderId, idr, usdt };
         } else {
-            // Regex BTC biasanya pakai 8 desimal atau format titik/koma
-            const match = text.match(/(\d+[,.]\d+)\s*BTC/);
-            const val = match ? parseFloat(match[1].replace(',', '.')) : 0;
-            if (idr === 0 || val === 0) return null;
-            return { date, merchant, order_id: orderId, idr, btc: val };
+            // --- LOGIKA KHUSUS BTC (Format Exchange) ---
+            // 1. Ambil ID Pesanan (bisa 8 digit seperti 73927680)
+            const idMatch = text.match(/(?:ID Pesanan|ID Transaksi)\s*([\d]+)/i) || text.match(/\b(\d{8,20})\b/);
+            const orderId = idMatch ? idMatch[1] : 'BTC-' + Date.now();
+
+            // 2. Ambil Nominal BTC (Cari angka desimal sebelum kata BTC)
+            let btc = 0;
+            const btcMatches = [...text.matchAll(/([\d.,]+)\s*BTC/gi)];
+            if (btcMatches.length > 0) {
+                // Ambil nilai terbesar (karena biasanya ada fee yang angkanya sangat kecil)
+                const values = btcMatches.map(m => parseFloat(m[1].replace(/,/g, '')));
+                btc = Math.max(...values);
+            }
+
+            // 3. Ambil IDR (Kalau screenshot exchange, biasanya ga ada IDR, adanya USDT)
+            let idr = 0;
+            const idrMatches = [...text.matchAll(/(\d{1,3}(?:\.\d{3})+)\s*IDR/g)];
+            if (idrMatches.length > 0) {
+                const amounts = idrMatches.map(m => parseInt(m[1].replace(/\./g, '')));
+                idr = Math.max(...amounts);
+            }
+            // Jika user mau, IDR ini nanti bisa diedit manual lewat tombol edit (karena di gambar ga ada IDR)
+
+            // Validasi: Minimal BTC harus ada
+            if (btc === 0) return null;
+            
+            return { date, merchant, order_id: orderId, idr, btc };
         }
     }
 
-    // --- FETCH DATA ---
     async function fetchData() {
-        // Fetch USDT
         try {
             const { data } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
             renderTableUsdt(data);
         } catch (e) { console.error(e); }
 
-        // Fetch BTC
         try {
             const { data } = await supabaseClient.from('transactions_btc').select('*').order('date', { ascending: false });
             renderTableBtc(data);
@@ -307,18 +326,17 @@
         document.getElementById('totalBtc').innerText = totalAsset.toLocaleString('id-ID', {minimumFractionDigits: 8}) + ' BTC';
     }
 
-    // --- CRUD ---
     async function editTx(id, table, oldMerchant, oldIdr, oldAsset, type) {
         let newMerchant = prompt("Edit Nama Merchant:", oldMerchant);
         if (newMerchant === null) return;
         if (newMerchant.trim() === "") newMerchant = oldMerchant;
 
-        let newIdr = prompt("Edit Nominal IDR (Angka saja):", oldIdr);
+        let newIdr = prompt("Edit Nominal IDR (Isi 0 jika transaksi pakai USDT):", oldIdr);
         if (newIdr === null) return;
         newIdr = parseInt(newIdr.replace(/\./g, ''));
-        if (isNaN(newIdr) || newIdr === 0) newIdr = oldIdr;
+        if (isNaN(newIdr)) newIdr = oldIdr;
 
-        let newAsset = prompt(`Edit Nominal ${type.toUpperCase()} (Pakai koma):`, oldAsset);
+        let newAsset = prompt(`Edit Nominal ${type.toUpperCase()} (Pakai titik):`, oldAsset);
         if (newAsset === null) return;
         newAsset = parseFloat(newAsset.replace(',', '.'));
         if (isNaN(newAsset) || newAsset === 0) newAsset = oldAsset;
