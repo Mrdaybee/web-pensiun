@@ -216,11 +216,29 @@
         setTimeout(() => { toast.className = ''; }, 4000);
     }
 
-    // --- FUNGSI PEMBERSIH ANGKA ---
+    // --- FUNGSI KALKULASI OTOMATIS USDT (BTC) ---
+    function calculateUsdt() {
+        const priceEl = document.getElementById('mPrice');
+        const btcEl = document.getElementById('mBtc');
+        const usdtEl = document.getElementById('mUsdt');
+        
+        if (priceEl && btcEl && usdtEl) {
+            const price = parseFloat(priceEl.value) || 0;
+            const btc = parseFloat(btcEl.value) || 0;
+            const result = price * btc;
+            
+            // Tampilkan maksimal 4 angka di belakang koma
+            if (result > 0) {
+                usdtEl.value = parseFloat(result.toFixed(4));
+            } else {
+                usdtEl.value = 0;
+            }
+        }
+    }
+
     function cleanNumber(val) {
         if (!val) return 0;
         let str = val.toString().trim();
-        
         if (str.includes(',') && str.includes('.')) {
             str = str.replace(/,/g, ''); 
         } else if (str.includes(',')) {
@@ -239,7 +257,6 @@
         return parseFloat(str) || 0;
     }
 
-    // --- FUNGSI MODAL ---
     function openModal(type, mode, data = null) {
         currentAction = { type, mode, data };
         const formContainer = document.getElementById('modalForm');
@@ -263,9 +280,10 @@
                 <div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${valDate}"></div>
                 <div class="form-group"><label>Biaya (Fee):</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : ''}"></div>
                 <div class="form-group"><label>Order ID:</label><input type="text" id="mOrderId" value="${data ? (data.order_id || '') : ''}"></div>
-                <div class="form-group"><label>Harga BTC:</label><input type="number" step="0.1" id="mPrice" value="${data ? (data.price_btc || 0) : 0}"></div>
+                <!-- Harga dan BTC pakai oninput untuk trigger kalkulasi -->
+                <div class="form-group"><label>Harga BTC:</label><input type="number" step="0.1" id="mPrice" value="${data ? (data.price_btc || 0) : 0}" oninput="calculateUsdt()"></div>
                 <div class="form-group"><label>Nominal (USDT):</label><input type="number" step="0.0001" id="mUsdt" value="${data ? (data.usdt_spent || 0) : 0}"></div>
-                <div class="form-group"><label>Jumlah BTC:</label><input type="number" step="0.00000001" id="mBtc" value="${data ? (data.btc || 0) : 0}"></div>
+                <div class="form-group"><label>Jumlah BTC:</label><input type="number" step="0.00000001" id="mBtc" value="${data ? (data.btc || 0) : 0}" oninput="calculateUsdt()"></div>
             `;
         }
 
@@ -397,13 +415,12 @@
             const usdtMatch = text.match(/(?:Nilai yang Terpenuhi)\s*([\d.,]+)\s*USDT/i);
             if (usdtMatch) usdt_spent = cleanNumber(usdtMatch[1]);
 
-            // REVISI REGEX BIAYA (Lebih toleran terhadap spasi/titik dua)
             let fee = "";
             const feeMatch = text.match(/Biaya[\s:=]*([\d.,]+)\s*BTC/i);
             if (feeMatch) {
                 fee = feeMatch[1].trim() + ' BTC';
             } else {
-                fee = "0 BTC"; // Fallback jika benar-benar tidak ada
+                fee = "0 BTC"; 
             }
 
             usdt_spent = parseFloat(usdt_spent.toFixed(4));
