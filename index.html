@@ -167,7 +167,7 @@
         toast.className = isError ? 'show error' : 'show';
         toast.querySelector('span').innerText = message;
         toast.querySelector('i').className = isError ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-check-circle';
-        setTimeout(() => { toast.className = ''; }, 3000);
+        setTimeout(() => { toast.className = ''; }, 4000);
     }
 
     document.getElementById('fileInputUsdt').addEventListener('change', function(e) { handleFiles(this.files, 'usdt'); });
@@ -188,14 +188,23 @@
                 if (parsedData) {
                     const table = type === 'usdt' ? 'transactions' : 'transactions_btc';
                     const { error } = await supabaseClient.from(table).insert([parsedData]);
-                    if (error) console.log("Skip/Error:", error.message);
+                    if (error) {
+                        console.log("Supabase Error:", error);
+                        showToast("Error DB: " + error.message, true);
+                    } else {
+                        showToast("Transaksi " + type.toUpperCase() + " tersimpan!");
+                    }
+                } else {
+                    showToast("Gagal baca gambar " + type.toUpperCase(), true);
                 }
-            } catch (error) { console.error("Error scan:", error); }
+            } catch (error) { 
+                console.error("Error scan:", error); 
+                showToast("Sistem Error", true);
+            }
         }
         await worker.terminate();
         statusDiv.classList.remove('active');
         document.getElementById(type === 'usdt' ? 'fileInputUsdt' : 'fileInputBtc').value = '';
-        showToast(`Selesai memproses ${files.length} gambar ${type.toUpperCase()}!`);
         fetchData();
     }
 
@@ -226,7 +235,7 @@
             if (idr === 0 || usdt === 0) return null;
             return { date, merchant, order_id: orderId, idr, usdt };
         } else {
-            // LOGIKA BTC (Hitung USDT = Harga x BTC)
+            // LOGIKA BTC
             const idMatch = text.match(/(?:ID Pesanan|ID Transaksi)\s*([\d]+)/i);
             const orderId = idMatch ? idMatch[1] : 'BTC-' + Date.now();
 
@@ -235,30 +244,23 @@
             const btcMatches = [...text.matchAll(/([\d.,]+)\s*BTC/gi)];
             if (btcMatches.length > 0) {
                 const values = btcMatches.map(m => parseFloat(m[1].replace(/,/g, '')));
-                btc = Math.max(...values); // Ambil yang paling besar (biasanya jumlah beli, bukan fee)
+                btc = Math.max(...values); 
             }
 
-            // Ambil Harga BTC (Price)
-            let price = 0;
-            const priceMatch = text.match(/(?:Harga Order|Harga yang Terpenuhi)\s*([\d.,]+)/i);
-            if (priceMatch) {
-                price = parseFloat(priceMatch[1].replace(/,/g, ''));
-            }
-
-            // Kalkulasi USDT
+            // Ambil USDT Amount (Nilai yang Terpenuhi)
             let usdt_spent = 0;
-            if (price > 0 && btc > 0) {
-                usdt_spent = price * btc;
-            } else {
-                // Fallback kalau harga nggak kebaca, ambil dari "Nilai yang Terpenuhi"
-                const usdtMatches = [...text.matchAll(/([\d.,]+)\s*USDT/gi)];
-                if (usdtMatches.length > 0) {
-                    const values = usdtMatches.map(m => parseFloat(m[1].replace(/,/g, '')));
-                    usdt_spent = Math.max(...values);
-                }
+            const usdtMatches = [...text.matchAll(/([\d.,]+)\s*USDT/gi)];
+            if (usdtMatches.length > 0) {
+                const values = usdtMatches.map(m => parseFloat(m[1].replace(/,/g, '')));
+                usdt_spent = Math.max(...values);
             }
 
-            if (btc === 0 || usdt_spent === 0) return null;
+            console.log("Debug OCR BTC -> BTC:", btc, "USDT:", usdt_spent);
+
+            // Kalau BTC 0, anggap gagal
+            if (btc === 0) return null;
+            
+            // Jika USDT kebaca 0, set ke 0 aja biar masuk tabel
             return { date, merchant, order_id: orderId, usdt_spent, btc };
         }
     }
