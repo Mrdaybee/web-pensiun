@@ -77,8 +77,8 @@
         .hidden { display: none; }
 
         /* MODAL STYLES */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .modal-content { background: var(--card-bg); width: 90%; max-width: 500px; border-radius: 16px; border: 1px solid var(--border); padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; pointer-events: auto; }
+        .modal-content { background: var(--card-bg); width: 90%; max-width: 500px; border-radius: 16px; border: 1px solid var(--border); padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); pointer-events: auto; }
         .modal-content h2 { font-size: 20px; margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px; }
@@ -209,53 +209,82 @@
         return parseFloat(str);
     }
 
-    // --- LOGIKA MODAL KONFIRMASI ---
+    // --- LOGIKA MODAL KONFIRMASI (REVISI DOM MANIPULATION) ---
     function askConfirmation(data, type) {
         return new Promise((resolve) => {
             modalResolver = resolve;
             currentEditData = JSON.parse(JSON.stringify(data));
             currentEditData._type = type;
 
-            let formHtml = `<div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${data.date}"></div>`;
-            
+            const formContainer = document.getElementById('modalForm');
+            formContainer.innerHTML = ''; // Bersihkan form lama
+
+            const addField = (label, id, value, step = 'any', inputType = 'text') => {
+                const div = document.createElement('div');
+                div.className = 'form-group';
+                
+                const lbl = document.createElement('label');
+                lbl.innerText = label;
+                
+                const input = document.createElement('input');
+                input.type = inputType;
+                input.id = id;
+                input.value = value;
+                if (step !== 'any') input.step = step;
+
+                div.appendChild(lbl);
+                div.appendChild(input);
+                formContainer.appendChild(div);
+            };
+
+            addField('Tanggal:', 'mDate', data.date || '');
+
             if (type === 'usdt') {
-                formHtml += `
-                    <div class="form-group"><label>Merchant:</label><input type="text" id="mMerchant" value="${data.merchant}"></div>
-                    <div class="form-group"><label>IDR:</label><input type="number" id="mIdr" value="${data.idr}"></div>
-                    <div class="form-group"><label>USDT:</label><input type="number" step="0.0001" id="mUsdt" value="${data.usdt}"></div>
-                `;
+                addField('Merchant:', 'mMerchant', data.merchant || '');
+                addField('IDR:', 'mIdr', data.idr || 0, '1', 'number');
+                addField('USDT:', 'mUsdt', data.usdt || 0, '0.0001', 'number');
             } else {
-                formHtml += `
-                    <div class="form-group"><label>Biaya (Fee):</label><input type="text" id="mMerchant" value="${data.merchant}"></div>
-                    <div class="form-group"><label>Harga BTC:</label><input type="number" step="0.1" id="mPrice" value="${data.price_btc}"></div>
-                    <div class="form-group"><label>Nominal USDT:</label><input type="number" step="0.0001" id="mUsdt" value="${data.usdt_spent}"></div>
-                    <div class="form-group"><label>BTC:</label><input type="number" step="0.00000001" id="mBtc" value="${data.btc}"></div>
-                `;
+                addField('Biaya (Fee):', 'mMerchant', data.merchant || '');
+                addField('Harga BTC:', 'mPrice', data.price_btc || 0, '0.1', 'number');
+                addField('Nominal USDT:', 'mUsdt', data.usdt_spent || 0, '0.0001', 'number');
+                addField('BTC:', 'mBtc', data.btc || 0, '0.00000001', 'number');
             }
 
-            document.getElementById('modalForm').innerHTML = formHtml;
             document.getElementById('confirmModal').classList.remove('hidden');
         });
     }
 
     function resolveModal(isSave) {
         document.getElementById('confirmModal').classList.add('hidden');
+        
         if (isSave) {
-            currentEditData.date = document.getElementById('mDate').value;
-            currentEditData.merchant = document.getElementById('mMerchant').value;
+            const dateEl = document.getElementById('mDate');
+            const merchantEl = document.getElementById('mMerchant');
             
-            if (currentEditData._type === 'usdt') {
-                currentEditData.idr = parseInt(document.getElementById('mIdr').value) || 0;
-                currentEditData.usdt = parseFloat(document.getElementById('mUsdt').value) || 0;
+            if (dateEl && merchantEl) {
+                currentEditData.date = dateEl.value;
+                currentEditData.merchant = merchantEl.value;
+
+                if (currentEditData._type === 'usdt') {
+                    const idrEl = document.getElementById('mIdr');
+                    const usdtEl = document.getElementById('mUsdt');
+                    currentEditData.idr = idrEl ? (parseInt(idrEl.value) || 0) : 0;
+                    currentEditData.usdt = usdtEl ? (parseFloat(usdtEl.value) || 0) : 0;
+                } else {
+                    const priceEl = document.getElementById('mPrice');
+                    const usdtEl = document.getElementById('mUsdt');
+                    const btcEl = document.getElementById('mBtc');
+                    currentEditData.price_btc = priceEl ? (parseFloat(priceEl.value) || 0) : 0;
+                    currentEditData.usdt_spent = usdtEl ? (parseFloat(usdtEl.value) || 0) : 0;
+                    currentEditData.btc = btcEl ? (parseFloat(btcEl.value) || 0) : 0;
+                }
+                delete currentEditData._type;
+                if (modalResolver) modalResolver(currentEditData);
             } else {
-                currentEditData.price_btc = parseFloat(document.getElementById('mPrice').value) || 0;
-                currentEditData.usdt_spent = parseFloat(document.getElementById('mUsdt').value) || 0;
-                currentEditData.btc = parseFloat(document.getElementById('mBtc').value) || 0;
+                if (modalResolver) modalResolver(null);
             }
-            delete currentEditData._type;
-            modalResolver(currentEditData);
         } else {
-            modalResolver(null);
+            if (modalResolver) modalResolver(null);
         }
     }
 
