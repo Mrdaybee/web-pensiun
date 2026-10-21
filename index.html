@@ -267,9 +267,9 @@
                 btc = Math.max(...values); 
             }
 
-            // 2. Ambil Harga BTC
+            // 2. Ambil Harga BTC HANYA dari "Rata-rata Harga yang Terpenuhi"
             let price = 0;
-            const priceMatch = text.match(/(?:Harga Order|Rata-rata Harga yang Terpenuhi)\s*([\d.,]+)/i);
+            const priceMatch = text.match(/(?:Rata-rata Harga yang Terpenuhi)\s*([\d.,]+)/i);
             if (priceMatch) {
                 price = cleanNumber(priceMatch[1]);
             }
@@ -277,7 +277,7 @@
             // 3. Hitung USDT
             let usdt_spent = price * btc;
 
-            // 4. Fallback
+            // 4. Fallback cari teks USDT langsung
             if (usdt_spent === 0 || isNaN(usdt_spent)) {
                 const usdtMatch = text.match(/(?:Nilai yang Terpenuhi|Total)\s*([\d.,]+)\s*USDT/i);
                 if (usdtMatch) {
