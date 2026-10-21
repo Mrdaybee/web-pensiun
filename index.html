@@ -7,302 +7,109 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <!-- Library Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --success: #10b981;
-            --danger: #ef4444;
-            --border: #334155;
-            --gradient-1: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
-            --gradient-2: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
-            --gradient-3: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-        }
-
+        :root { --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; --text-muted: #94a3b8; --primary: #3b82f6; --success: #10b981; --danger: #ef4444; --border: #334155; --gradient-1: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%); --gradient-2: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%); --gradient-3: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            padding: 30px 20px;
-            min-height: 100vh;
-        }
-
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: var(--text); padding: 30px 20px; min-height: 100vh; }
         .container { max-width: 1200px; margin: 0 auto; }
-
-        /* Header */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 40px;
-        }
-        .header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+        .header h1 { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
         .header h1 i { color: var(--primary); }
         .header p { color: var(--text-muted); margin-top: 5px; font-size: 14px; }
-
-        /* Dashboard Cards */
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .card {
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s ease;
-        }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border); position: relative; overflow: hidden; transition: transform 0.3s ease; }
         .card:hover { transform: translateY(-5px); }
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 4px;
-        }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
         .card.idr::before { background: var(--gradient-1); }
         .card.usdt::before { background: var(--gradient-2); }
         .card.tx::before { background: var(--gradient-3); }
-
-        .card-title {
-            color: var(--text-muted);
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .card-value {
-            font-size: 32px;
-            font-weight: 700;
-        }
+        .card-title { color: var(--text-muted); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .card-value { font-size: 32px; font-weight: 700; }
         .idr .card-value { color: #2dd4bf; }
         .usdt .card-value { color: #d946ef; }
         .tx .card-value { color: #f59e0b; }
-
-        /* Upload Area */
-        .upload-section {
-            background: var(--card-bg);
-            border: 2px dashed var(--border);
-            border-radius: 16px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 30px;
-            position: relative;
-        }
-        .upload-section:hover, .upload-section.dragover {
-            border-color: var(--primary);
-            background: rgba(59, 130, 246, 0.05);
-        }
-        .upload-icon {
-            font-size: 48px;
-            color: var(--primary);
-            margin-bottom: 15px;
-            animation: float 3s ease-in-out infinite;
-        }
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
+        .upload-section { background: var(--card-bg); border: 2px dashed var(--border); border-radius: 16px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s ease; margin-bottom: 30px; position: relative; }
+        .upload-section:hover, .upload-section.dragover { border-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
+        .upload-icon { font-size: 48px; color: var(--primary); margin-bottom: 15px; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
         input[type="file"] { display: none; }
-        .status-text {
-            margin-top: 15px;
-            font-weight: 600;
-            color: var(--primary);
-            font-size: 14px;
-            display: none;
-        }
+        .status-text { margin-top: 15px; font-weight: 600; color: var(--primary); font-size: 14px; display: none; }
         .status-text.active { display: block; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        /* Table Container */
-        .table-container {
-            background: var(--card-bg);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            overflow-x: auto;
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
-        }
+        .table-container { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
-        th {
-            background-color: rgba(15, 23, 42, 0.5);
-            color: var(--text-muted);
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
+        th { background-color: rgba(15, 23, 42, 0.5); color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
         tr:last-child td { border-bottom: none; }
         tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
-        
-        .badge {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
+        .badge { background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
         .text-right { text-align: right; }
         .val-idr { font-weight: 600; color: #e2e8f0; }
         .val-usdt { font-weight: 700; color: #2dd4bf; }
-
-        .btn-delete {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-            border: none;
-            width: 32px; height: 32px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
         .btn-delete:hover { background: var(--danger); color: white; }
-
-        .btn-clear {
-            background: transparent;
-            color: var(--text-muted);
-            border: 1px solid var(--border);
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
+        .btn-clear { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .btn-clear:hover { border-color: var(--danger); color: var(--danger); }
-
-        .table-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 15px;
-        }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .table-header h2 { font-size: 18px; font-weight: 600; }
-        
-        /* Toast Notification */
-        #toast {
-            position: fixed; bottom: 30px; right: 30px;
-            background: var(--success); color: white;
-            padding: 15px 25px; border-radius: 10px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            font-weight: 600; font-size: 14px;
-            transform: translateY(100px); opacity: 0;
-            transition: all 0.3s ease;
-            display: flex; align-items: center; gap: 10px;
-            z-index: 1000;
-        }
+        #toast { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); font-weight: 600; font-size: 14px; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; z-index: 1000; }
         #toast.show { transform: translateY(0); opacity: 1; }
         #toast.error { background: var(--danger); }
     </style>
 </head>
 <body>
 <div class="container">
-    <!-- Header -->
     <div class="header">
         <div>
             <h1><i class="fa-solid fa-chart-pie"></i> Aset Pensiun</h1>
             <p>Sistem cerdas pelacak transaksi USDT Anda.</p>
         </div>
     </div>
-
-    <!-- Dashboard -->
     <div class="dashboard">
-        <div class="card idr">
-            <div class="card-title"><i class="fa-solid fa-wallet"></i> Total Pengeluaran</div>
-            <div class="card-value" id="totalIdr">Rp 0</div>
-        </div>
-        <div class="card usdt">
-            <div class="card-title"><i class="fa-brands fa-bitcoin"></i> Total USDT</div>
-            <div class="card-value" id="totalUsdt">0.0000 USDT</div>
-        </div>
-        <div class="card tx">
-            <div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div>
-            <div class="card-value" id="totalTx">0</div>
-        </div>
+        <div class="card idr"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Pengeluaran</div><div class="card-value" id="totalIdr">Rp 0</div></div>
+        <div class="card usdt"><div class="card-title"><i class="fa-brands fa-bitcoin"></i> Total USDT</div><div class="card-value" id="totalUsdt">0.0000 USDT</div></div>
+        <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTx">0</div></div>
     </div>
-
-    <!-- Upload Area -->
     <div class="upload-section" id="dropZone" onclick="document.getElementById('fileInput').click()">
         <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
         <h3>Tarik & Lepas Screenshot di Sini</h3>
-        <p style="color: var(--text-muted); margin-top: 8px; font-size: 14px;">Atau klik untuk memilih file gambar (Bisa multiple)</p>
+        <p style="color: var(--text-muted); margin-top: 8px; font-size: 14px;">Atau klik untuk memilih file gambar</p>
         <input type="file" id="fileInput" accept="image/*" multiple>
         <div class="status-text" id="statusText"></div>
     </div>
-
-    <!-- Table Section -->
     <div class="table-header">
         <h2><i class="fa-solid fa-list-ul"></i> Riwayat Transaksi</h2>
         <button class="btn-clear" onclick="clearAllData()"><i class="fa-solid fa-trash"></i> Hapus Semua</button>
     </div>
-    
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th>Tanggal</th>
-                    <th>Merchant</th>
-                    <th>Order ID</th>
-                    <th class="text-right">Nominal (IDR)</th>
-                    <th class="text-right">USDT</th>
-                    <th style="text-align: center;">Status</th>
-                    <th style="text-align: center;">Aksi</th>
+                    <th>Tanggal</th><th>Merchant</th><th>Order ID</th>
+                    <th class="text-right">Nominal (IDR)</th><th class="text-right">USDT</th>
+                    <th style="text-align: center;">Status</th><th style="text-align: center;">Aksi</th>
                 </tr>
             </thead>
-            <tbody id="tableBody">
-                <!-- Data dirender oleh JS -->
-            </tbody>
+            <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
-
 <div id="toast"><i class="fa-solid fa-check-circle"></i> <span>Berhasil!</span></div>
-
 <script>
-    const API_URL = window.location.origin;
+    const SUPABASE_URL = 'GANTI_URL_SUPABASE_KAMU';
+    const SUPABASE_KEY = 'GANTI_KEY_SUPABASE_KAMU';
 
-    // Drag and Drop Events
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const dropZone = document.getElementById('dropZone');
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
     dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        handleFiles(e.dataTransfer.files);
-    });
-
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-        handleFiles(this.files);
-    });
-
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+    document.getElementById('fileInput').addEventListener('change', function(e) { handleFiles(this.files); });
     document.addEventListener('DOMContentLoaded', fetchData);
 
-    // Toast Function
     function showToast(message, isError = false) {
         const toast = document.getElementById('toast');
         toast.className = isError ? 'show error' : 'show';
@@ -311,80 +118,61 @@
         setTimeout(() => { toast.className = ''; }, 3000);
     }
 
-    // OCR Processing
     async function handleFiles(files) {
         if (files.length === 0) return;
-        
         const statusDiv = document.getElementById('statusText');
         statusDiv.classList.add('active');
         const worker = await Tesseract.createWorker('ind+eng');
 
         for (let i = 0; i < files.length; i++) {
             statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses gambar ${i + 1} dari ${files.length}...`;
-            
             try {
                 const { data: { text } } = await worker.recognize(files[i]);
                 const parsedData = parseTransactionText(text);
                 
                 if (parsedData) {
-                    const response = await fetch(`${API_URL}/api/transactions`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(parsedData)
-                    });
-                    
-                    if (!response.ok) {
-                        console.log("Skip duplikat:", parsedData.orderId);
-                    }
+                    const { error } = await supabaseClient.from('transactions').insert([{
+                        date: parsedData.date, merchant: parsedData.merchant, order_id: parsedData.orderId, idr: parsedData.idr, usdt: parsedData.usdt
+                    }]);
+                    if (error) console.log("Skip/Error:", error.message);
                 }
-            } catch (error) {
-                console.error("Error scan:", error);
-            }
+            } catch (error) { console.error("Error scan:", error); }
         }
-        
         await worker.terminate();
         statusDiv.classList.remove('active');
         document.getElementById('fileInput').value = '';
-        
         showToast(`Selesai memproses ${files.length} gambar!`);
         fetchData();
     }
 
-    // Regex Parser
     function parseTransactionText(text) {
         const idMatch = text.match(/\b(\d{17,20})\b/);
         const orderId = idMatch ? idMatch[1] : 'ID-' + Date.now();
-        
         const idrMatches = [...text.matchAll(/(\d{1,3}(?:\.\d{3})+)\s*IDR/g)];
         let idr = 0;
         if (idrMatches.length > 0) {
             const amounts = idrMatches.map(m => parseInt(m[1].replace(/\./g, '')));
             idr = Math.max(...amounts);
         }
-        
         const usdtMatch = text.match(/(\d+,\d+)\s*USDT/);
         const usdt = usdtMatch ? parseFloat(usdtMatch[1].replace(',', '.')) : 0;
-        
         const dateMatch = text.match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/);
         const date = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 16).replace('T', ' ');
-        
         let merchant = "Unknown";
         const knownMerchants = ["Cv_Rpl", "SUIFONG", "CENTURY_PRIME", "FreeNoFee", "SpeedyCashEXC", "ROFIQ_VIIP", "Men_fasttrade", "GuitarHero", "FARZ-EX"];
         for (let m of knownMerchants) { if (text.includes(m)) { merchant = m; break; } }
-
         if (idr === 0 || usdt === 0) return null;
         return { date, merchant, orderId, idr, usdt };
     }
 
-    // Fetch and Render Data
     async function fetchData() {
         try {
-            const response = await fetch(`${API_URL}/api/transactions`);
-            const transactions = await response.json();
-            renderTable(transactions);
+            const { data, error } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
+            if (error) throw error;
+            renderTable(data);
         } catch (error) {
             console.error("Gagal ambil data:", error);
-            showToast("Gagal mengambil data dari server", true);
+            showToast("Gagal ambil data", true);
         }
     }
 
@@ -392,15 +180,10 @@
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
         let totalIdr = 0, totalUsdt = 0;
-
-        if (transactions.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data transaksi. Silakan upload screenshot.</td></tr>`;
-        }
-
+        if (transactions.length === 0) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data.</td></tr>`;
         transactions.forEach(tx => {
             totalIdr += Number(tx.idr);
             totalUsdt += Number(tx.usdt);
-            
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
@@ -409,32 +192,25 @@
                 <td class="text-right val-idr">Rp ${Number(tx.idr).toLocaleString('id-ID')}</td>
                 <td class="text-right val-usdt">${Number(tx.usdt).toLocaleString('id-ID', {minimumFractionDigits: 4})}</td>
                 <td style="text-align: center;"><span class="badge"><i class="fa-solid fa-check"></i> Sukses</span></td>
-                <td style="text-align: center;">
-                    <button class="btn-delete" onclick="deleteTx(${tx.id})"><i class="fa-solid fa-xmark"></i></button>
-                </td>
-            `;
+                <td style="text-align: center;"><button class="btn-delete" onclick="deleteTx(${tx.id})"><i class="fa-solid fa-xmark"></i></button></td>`;
             tbody.appendChild(tr);
         });
-
         document.getElementById('totalTx').innerText = transactions.length;
         document.getElementById('totalIdr').innerText = 'Rp ' + totalIdr.toLocaleString('id-ID');
         document.getElementById('totalUsdt').innerText = totalUsdt.toLocaleString('id-ID', {minimumFractionDigits: 4}) + ' USDT';
     }
 
-    // Delete Functions
     async function deleteTx(id) {
         if(confirm("Hapus transaksi ini?")) {
-            await fetch(`${API_URL}/api/transactions/${id}`, { method: 'DELETE' });
-            showToast("Transaksi dihapus");
-            fetchData();
+            await supabaseClient.from('transactions').delete().eq('id', id);
+            showToast("Transaksi dihapus"); fetchData();
         }
     }
 
     async function clearAllData() {
-        if(confirm("Hapus SEMUA data? Tindakan ini tidak bisa dibatalkan.")) {
-            await fetch(`${API_URL}/api/transactions`, { method: 'DELETE' });
-            showToast("Semua data dibersihkan");
-            fetchData();
+        if(confirm("Hapus SEMUA data?")) {
+            await supabaseClient.from('transactions').delete().gt('id', 0);
+            showToast("Semua data dibersihkan"); fetchData();
         }
     }
 </script>
