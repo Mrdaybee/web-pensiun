@@ -286,27 +286,26 @@
         fetchLivePrices();
     }
 
-    // --- LOGIKA LIVE PRICE (COINGECKO API) ---
+    // --- LOGIKA LIVE PRICE (BACA DARI PROXY VERCEL) ---
     async function fetchLivePrices() {
         const btn = document.getElementById('btnRefresh');
         btn.classList.add('loading');
         try {
-            // Cache buster pakai timestamp
+            // Panggil proxy Vercel
             const url = `/api/price?t=${Date.now()}`;
-            const response = await fetch(url, { method: 'GET', mode: 'cors' });
-            
+            const response = await fetch(url);
             if (!response.ok) throw new Error('API Error');
             
             const json = await response.json();
             
-            if (json.tether && json.tether.idr) livePrice.usdtIdr = json.tether.idr;
-            if (json.bitcoin && json.bitcoin.usdt) livePrice.btcUsdt = json.bitcoin.usdt;
+            livePrice.usdtIdr = json.usdtIdr || 0;
+            livePrice.btcUsdt = json.btcUsdt || 0;
             
             updateDashboardSummary();
             showToast("Harga berhasil diupdate!");
         } catch (error) {
             console.error("Gagal ambil harga live:", error);
-            showToast("Gagal update harga live. Koneksi/API terblokir.", true);
+            showToast("Gagal update harga live.", true);
         } finally {
             btn.classList.remove('loading');
         }
