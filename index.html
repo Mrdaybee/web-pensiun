@@ -292,7 +292,7 @@
         btn.classList.add('loading');
         try {
             // Cache buster pakai timestamp
-            const url = `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether&vs_currencies=usdt,idr&t=${Date.now()}`;
+            const url = `/api/price?t=${Date.now()}`;
             const response = await fetch(url, { method: 'GET', mode: 'cors' });
             
             if (!response.ok) throw new Error('API Error');
