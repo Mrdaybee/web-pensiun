@@ -235,32 +235,47 @@
             if (idr === 0 || usdt === 0) return null;
             return { date, merchant, order_id: orderId, idr, usdt };
         } else {
-            // LOGIKA BTC
+            // --- LOGIKA BARU BTC ---
             const idMatch = text.match(/(?:ID Pesanan|ID Transaksi)\s*([\d]+)/i);
             const orderId = idMatch ? idMatch[1] : 'BTC-' + Date.now();
 
-            // Ambil BTC Amount
+            // 1. Ambil Jumlah BTC
             let btc = 0;
             const btcMatches = [...text.matchAll(/([\d.,]+)\s*BTC/gi)];
             if (btcMatches.length > 0) {
-                const values = btcMatches.map(m => parseFloat(m[1].replace(/,/g, '')));
+                const values = btcMatches.map(m => parseFloat(m[1].replace(/,/g, '.')));
                 btc = Math.max(...values); 
             }
 
-            // Ambil USDT Amount (Nilai yang Terpenuhi)
-            let usdt_spent = 0;
-            const usdtMatches = [...text.matchAll(/([\d.,]+)\s*USDT/gi)];
-            if (usdtMatches.length > 0) {
-                const values = usdtMatches.map(m => parseFloat(m[1].replace(/,/g, '')));
-                usdt_spent = Math.max(...values);
+            // 2. Ambil Harga BTC
+            let price = 0;
+            const priceMatch = text.match(/(?:Harga Order|Rata-rata Harga yang Terpenuhi)\s*([\d.,]+)/i);
+            if (priceMatch) {
+                // Bersihkan format (82,000 / 82.000 jadi 82000)
+                price = parseFloat(priceMatch[1].replace(/[.,]/g, ''));
             }
 
-            console.log("Debug OCR BTC -> BTC:", btc, "USDT:", usdt_spent);
+            // 3. Hitung USDT = Harga x Jumlah BTC
+            let usdt_spent = price * btc;
 
-            // Kalau BTC 0, anggap gagal
+            // 4. Kalau Harga gagal kebaca, fallback cari teks "USDT" langsung
+            if (usdt_spent === 0 || isNaN(usdt_spent)) {
+                const usdtMatch = text.match(/(?:Nilai yang Terpenuhi|Total)\s*([\d.,]+)\s*USDT/i);
+                if (usdtMatch) {
+                    let strVal = usdtMatch[1];
+                    // Handle format desimal (14,104 atau 14.104)
+                    if (strVal.includes(',') && !strVal.includes('.')) {
+                         strVal = strVal.replace(',', '.');
+                    } else if (strVal.includes('.') && strVal.includes(',')) {
+                         strVal = strVal.replace(/\./g, '').replace(',', '.');
+                    }
+                    usdt_spent = parseFloat(strVal);
+                }
+            }
+
+            console.log("Debug: Harga BTC:", price, "| Jumlah BTC:", btc, "| Hasil USDT:", usdt_spent);
+
             if (btc === 0) return null;
-            
-            // Jika USDT kebaca 0, set ke 0 aja biar masuk tabel
             return { date, merchant, order_id: orderId, usdt_spent, btc };
         }
     }
