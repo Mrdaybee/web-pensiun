@@ -39,7 +39,6 @@
         .btc .card-value { color: #f97316; }
         .tx .card-value { color: #f59e0b; }
         
-        /* AREA UPLOAD & TOMBOL MANUAL */
         .action-row { display: flex; gap: 15px; margin-bottom: 30px; }
         .upload-section { flex: 1; background: var(--card-bg); border: 2px dashed var(--border); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative; }
         .upload-section:hover, .upload-section.dragover { border-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
@@ -103,7 +102,6 @@
         <button id="tabBtnBtc" class="tab-btn" onclick="switchTab('btc')"><i class="fa-brands fa-bitcoin"></i> Aset Bitcoin (BTC)</button>
     </div>
 
-    <!-- SECTION USDT -->
     <div id="sectionUsdt">
         <div class="header">
             <div>
@@ -140,7 +138,6 @@
         </div>
     </div>
 
-    <!-- SECTION BTC -->
     <div id="sectionBtc" class="hidden">
         <div class="header">
             <div>
@@ -178,7 +175,6 @@
     </div>
 </div>
 
-<!-- MODAL UNIVERSAL -->
 <div id="confirmModal" class="modal-overlay hidden">
     <div class="modal-content">
         <h2 id="modalTitle"><i class="fa-solid fa-clipboard-check"></i> Konfirmasi Data</h2>
@@ -220,30 +216,22 @@
         setTimeout(() => { toast.className = ''; }, 4000);
     }
 
-    // --- FUNGSI PEMBERSIH ANGKA (Anti-Ngaco) ---
+    // --- FUNGSI PEMBERSIH ANGKA ---
     function cleanNumber(val) {
         if (!val) return 0;
         let str = val.toString().trim();
         
-        // Jika ada koma DAN titik (misal 81,617.4)
         if (str.includes(',') && str.includes('.')) {
-            str = str.replace(/,/g, ''); // Buang koma ribuan
-        } 
-        // Jika HANYA ada koma (misal 82,400 atau 0,000172)
-        else if (str.includes(',')) {
+            str = str.replace(/,/g, ''); 
+        } else if (str.includes(',')) {
             const parts = str.split(',');
-            // Jika 3 digit di belakang koma, anggap ribuan (82,400 -> 82400)
             if (parts[1].length === 3) {
                 str = str.replace(/,/g, '');
             } else {
-                // Anggap desimal (0,000172 -> 0.000172)
                 str = str.replace(',', '.');
             }
-        }
-        // Jika HANYA ada titik (misal 82.400 atau 0.000172)
-        else if (str.includes('.')) {
+        } else if (str.includes('.')) {
             const parts = str.split('.');
-            // Jika 3 digit di belakang titik DAN bukan desimal (82.400 -> 82400)
             if (parts[1].length === 3 && parseInt(parts[0]) > 0) {
                 str = str.replace(/\./g, '');
             }
@@ -251,7 +239,7 @@
         return parseFloat(str) || 0;
     }
 
-    // --- FUNGSI MODAL (Buka, Tutup, Simpan) ---
+    // --- FUNGSI MODAL ---
     function openModal(type, mode, data = null) {
         currentAction = { type, mode, data };
         const formContainer = document.getElementById('modalForm');
@@ -273,7 +261,7 @@
             title.innerHTML = `<i class="fa-brands fa-bitcoin"></i> ${mode === 'edit' ? 'Edit' : (mode === 'manual' ? 'Input Manual' : 'Konfirmasi')} BTC`;
             html += `
                 <div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${valDate}"></div>
-                <div class="form-group"><label>Biaya (Fee):</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : '0 BTC'}"></div>
+                <div class="form-group"><label>Biaya (Fee):</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : ''}"></div>
                 <div class="form-group"><label>Order ID:</label><input type="text" id="mOrderId" value="${data ? (data.order_id || '') : ''}"></div>
                 <div class="form-group"><label>Harga BTC:</label><input type="number" step="0.1" id="mPrice" value="${data ? (data.price_btc || 0) : 0}"></div>
                 <div class="form-group"><label>Nominal (USDT):</label><input type="number" step="0.0001" id="mUsdt" value="${data ? (data.usdt_spent || 0) : 0}"></div>
@@ -296,7 +284,7 @@
         const orderId = document.getElementById('mOrderId').value;
         
         if (!date || !merchant || !orderId) {
-            showToast("Tanggal, Merchant/Biaya, dan Order ID wajib diisi!", true);
+            showToast("Tanggal, Biaya/Merchant, dan Order ID wajib diisi!", true);
             return;
         }
 
@@ -318,7 +306,6 @@
                 if (error) throw error;
                 showToast("Data berhasil diupdate!");
             } else {
-                // Untuk insert, kita cegah duplikasi order_id
                 const { data: existing } = await supabaseClient.from(table).select('id').eq('order_id', orderId);
                 if (existing && existing.length > 0) {
                     showToast("Order ID sudah ada di database!", true);
@@ -337,7 +324,6 @@
         }
     }
 
-    // --- LOGIKA UPLOAD & OCR ---
     document.getElementById('fileInputUsdt').addEventListener('change', function(e) { handleFiles(this.files, 'usdt'); });
     document.getElementById('fileInputBtc').addEventListener('change', function(e) { handleFiles(this.files, 'btc'); });
 
@@ -354,7 +340,6 @@
                 const parsedData = parseTransactionText(text, type);
                 
                 if (parsedData) {
-                    // Buka modal untuk konfirmasi (mode 'ocr')
                     openModal(type, 'ocr', parsedData);
                 } else {
                     showToast("Gagal baca gambar " + type.toUpperCase(), true);
@@ -412,9 +397,14 @@
             const usdtMatch = text.match(/(?:Nilai yang Terpenuhi)\s*([\d.,]+)\s*USDT/i);
             if (usdtMatch) usdt_spent = cleanNumber(usdtMatch[1]);
 
-            let fee = "0 BTC";
-            const feeMatch = text.match(/(?:Biaya)\s*([\d.,]+\s*BTC)/i);
-            if (feeMatch) fee = feeMatch[1].trim().replace(/\s+/g, ' ');
+            // REVISI REGEX BIAYA (Lebih toleran terhadap spasi/titik dua)
+            let fee = "";
+            const feeMatch = text.match(/Biaya[\s:=]*([\d.,]+)\s*BTC/i);
+            if (feeMatch) {
+                fee = feeMatch[1].trim() + ' BTC';
+            } else {
+                fee = "0 BTC"; // Fallback jika benar-benar tidak ada
+            }
 
             usdt_spent = parseFloat(usdt_spent.toFixed(4));
 
@@ -424,7 +414,6 @@
         }
     }
 
-    // --- RENDER DATA & CRUD ---
     async function fetchData() {
         try {
             const { data } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
