@@ -39,12 +39,18 @@
         .btc .card-value { color: #f97316; }
         .tx .card-value { color: #f59e0b; }
         
-        .upload-section { background: var(--card-bg); border: 2px dashed var(--border); border-radius: 16px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s ease; margin-bottom: 30px; position: relative; }
+        /* AREA UPLOAD & TOMBOL MANUAL */
+        .action-row { display: flex; gap: 15px; margin-bottom: 30px; }
+        .upload-section { flex: 1; background: var(--card-bg); border: 2px dashed var(--border); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative; }
         .upload-section:hover, .upload-section.dragover { border-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
-        .upload-icon { font-size: 48px; color: var(--primary); margin-bottom: 15px; animation: float 3s ease-in-out infinite; }
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .upload-icon { font-size: 36px; color: var(--primary); margin-bottom: 10px; }
         input[type="file"] { display: none; }
-        .status-text { margin-top: 15px; font-weight: 600; color: var(--primary); font-size: 14px; display: none; }
+        
+        .btn-manual { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 0 30px; border-radius: 16px; cursor: pointer; font-size: 16px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; min-width: 200px; }
+        .btn-manual:hover { border-color: var(--success); color: var(--success); background: rgba(16, 185, 129, 0.05); }
+        .btn-manual i { font-size: 32px; }
+
+        .status-text { margin-top: 10px; font-weight: 600; color: var(--primary); font-size: 14px; display: none; }
         .status-text.active { display: block; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         
@@ -97,6 +103,7 @@
         <button id="tabBtnBtc" class="tab-btn" onclick="switchTab('btc')"><i class="fa-brands fa-bitcoin"></i> Aset Bitcoin (BTC)</button>
     </div>
 
+    <!-- SECTION USDT -->
     <div id="sectionUsdt">
         <div class="header">
             <div>
@@ -109,11 +116,17 @@
             <div class="card usdt"><div class="card-title"><i class="fa-solid fa-coins"></i> Total USDT</div><div class="card-value" id="totalUsdt">0.0000 USDT</div></div>
             <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTx">0</div></div>
         </div>
-        <div class="upload-section" onclick="document.getElementById('fileInputUsdt').click()">
-            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-            <h3>Tarik & Lepas Screenshot USDT di Sini</h3>
-            <input type="file" id="fileInputUsdt" accept="image/*" multiple>
-            <div class="status-text" id="statusTextUsdt"></div>
+        <div class="action-row">
+            <div class="upload-section" onclick="document.getElementById('fileInputUsdt').click()">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <h3>Upload Screenshot USDT</h3>
+                <input type="file" id="fileInputUsdt" accept="image/*" multiple>
+                <div class="status-text" id="statusTextUsdt"></div>
+            </div>
+            <button class="btn-manual" onclick="openModal('usdt', 'manual')">
+                <i class="fa-solid fa-plus"></i>
+                Tambah Manual
+            </button>
         </div>
         <div class="table-header">
             <h2><i class="fa-solid fa-list-ul"></i> Riwayat Transaksi USDT</h2>
@@ -127,6 +140,7 @@
         </div>
     </div>
 
+    <!-- SECTION BTC -->
     <div id="sectionBtc" class="hidden">
         <div class="header">
             <div>
@@ -139,11 +153,17 @@
             <div class="card btc"><div class="card-title"><i class="fa-brands fa-bitcoin"></i> Total BTC</div><div class="card-value" id="totalBtc">0.00000000 BTC</div></div>
             <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTxBtc">0</div></div>
         </div>
-        <div class="upload-section" onclick="document.getElementById('fileInputBtc').click()">
-            <i class="fa-solid fa-cloud-arrow-up upload-icon" style="color: #f97316;"></i>
-            <h3>Tarik & Lepas Screenshot BTC di Sini</h3>
-            <input type="file" id="fileInputBtc" accept="image/*" multiple>
-            <div class="status-text" id="statusTextBtc"></div>
+        <div class="action-row">
+            <div class="upload-section" onclick="document.getElementById('fileInputBtc').click()">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon" style="color: #f97316;"></i>
+                <h3>Upload Screenshot BTC</h3>
+                <input type="file" id="fileInputBtc" accept="image/*" multiple>
+                <div class="status-text" id="statusTextBtc"></div>
+            </div>
+            <button class="btn-manual" onclick="openModal('btc', 'manual')" style="color: #f97316;">
+                <i class="fa-solid fa-plus"></i>
+                Tambah Manual
+            </button>
         </div>
         <div class="table-header">
             <h2><i class="fa-solid fa-list-ul"></i> Riwayat Transaksi Bitcoin</h2>
@@ -158,14 +178,14 @@
     </div>
 </div>
 
-<!-- MODAL KONFIRMASI -->
+<!-- MODAL UNIVERSAL -->
 <div id="confirmModal" class="modal-overlay hidden">
     <div class="modal-content">
-        <h2><i class="fa-solid fa-clipboard-check"></i> Konfirmasi Data</h2>
+        <h2 id="modalTitle"><i class="fa-solid fa-clipboard-check"></i> Konfirmasi Data</h2>
         <div id="modalForm"></div>
         <div class="modal-actions">
-            <button onclick="resolveModal(false)" class="btn-cancel">Batal</button>
-            <button onclick="resolveModal(true)" class="btn-save">Simpan</button>
+            <button onclick="closeModal()" class="btn-cancel">Batal</button>
+            <button onclick="saveModal()" class="btn-save">Simpan</button>
         </div>
     </div>
 </div>
@@ -176,8 +196,7 @@
     const SUPABASE_KEY = 'sb_publishable_ebHFFHrTowLkOCJXEbClBw_MrE6t0hs';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let modalResolver = null;
-    let currentEditData = null;
+    let currentAction = { mode: '', type: '', data: null };
 
     function switchTab(tab) {
         if(tab === 'usdt') {
@@ -201,96 +220,124 @@
         setTimeout(() => { toast.className = ''; }, 4000);
     }
 
-    function cleanNumber(str) {
-        if (!str) return 0;
-        str = str.trim();
-        if (str.includes(',') && str.includes('.')) return parseFloat(str.replace(/\./g, '').replace(',', '.'));
-        if (str.includes(',')) return parseFloat(str.replace(',', '.'));
-        return parseFloat(str);
-    }
-
-    function escapeHTML(str) {
-        if (typeof str !== 'string') return str;
-        return str.replace(/[&<>'"]/g, 
-            tag => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                "'": '&#39;',
-                '"': '&quot;'
-            }[tag]));
-    }
-
-    // --- LOGIKA MODAL KONFIRMASI ---
-    function askConfirmation(data, type) {
-        return new Promise((resolve) => {
-            modalResolver = resolve;
-            currentEditData = JSON.parse(JSON.stringify(data));
-            currentEditData._type = type;
-
-            const formContainer = document.getElementById('modalForm');
-            
-            let formHtml = `<div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${escapeHTML(data.date || '')}"></div>`;
-            
-            if (type === 'usdt') {
-                formHtml += `
-                    <div class="form-group"><label>Merchant:</label><input type="text" id="mMerchant" value="${escapeHTML(data.merchant || '')}"></div>
-                    <div class="form-group"><label>IDR:</label><input type="number" id="mIdr" value="${data.idr || 0}"></div>
-                    <div class="form-group"><label>USDT:</label><input type="number" step="0.0001" id="mUsdt" value="${data.usdt || 0}"></div>
-                `;
-            } else {
-                formHtml += `
-                    <div class="form-group"><label>Biaya (Fee):</label><input type="text" id="mMerchant" value="${escapeHTML(data.merchant || '')}"></div>
-                    <div class="form-group"><label>Harga BTC:</label><input type="number" step="0.1" id="mPrice" value="${data.price_btc || 0}"></div>
-                    <div class="form-group"><label>Nominal USDT:</label><input type="number" step="0.0001" id="mUsdt" value="${data.usdt_spent || 0}"></div>
-                    <div class="form-group"><label>BTC:</label><input type="number" step="0.00000001" id="mBtc" value="${data.btc || 0}"></div>
-                `;
-            }
-
-            formContainer.innerHTML = formHtml;
-            document.getElementById('confirmModal').classList.remove('hidden');
-        });
-    }
-
-    function resolveModal(isSave) {
-        document.getElementById('confirmModal').classList.add('hidden');
+    // --- FUNGSI PEMBERSIH ANGKA (Anti-Ngaco) ---
+    function cleanNumber(val) {
+        if (!val) return 0;
+        let str = val.toString().trim();
         
-        try {
-            if (isSave) {
-                const dateEl = document.getElementById('mDate');
-                const merchantEl = document.getElementById('mMerchant');
-                
-                if (dateEl && merchantEl) {
-                    currentEditData.date = dateEl.value;
-                    currentEditData.merchant = merchantEl.value;
-
-                    if (currentEditData._type === 'usdt') {
-                        const idrEl = document.getElementById('mIdr');
-                        const usdtEl = document.getElementById('mUsdt');
-                        currentEditData.idr = idrEl ? (parseInt(idrEl.value) || 0) : 0;
-                        currentEditData.usdt = usdtEl ? (parseFloat(usdtEl.value) || 0) : 0;
-                    } else {
-                        const priceEl = document.getElementById('mPrice');
-                        const usdtEl = document.getElementById('mUsdt');
-                        const btcEl = document.getElementById('mBtc');
-                        currentEditData.price_btc = priceEl ? (parseFloat(priceEl.value) || 0) : 0;
-                        currentEditData.usdt_spent = usdtEl ? (parseFloat(usdtEl.value) || 0) : 0;
-                        currentEditData.btc = btcEl ? (parseFloat(btcEl.value) || 0) : 0;
-                    }
-                    delete currentEditData._type;
-                    if (modalResolver) modalResolver(currentEditData);
-                } else {
-                    if (modalResolver) modalResolver(null);
-                }
+        // Jika ada koma DAN titik (misal 81,617.4)
+        if (str.includes(',') && str.includes('.')) {
+            str = str.replace(/,/g, ''); // Buang koma ribuan
+        } 
+        // Jika HANYA ada koma (misal 82,400 atau 0,000172)
+        else if (str.includes(',')) {
+            const parts = str.split(',');
+            // Jika 3 digit di belakang koma, anggap ribuan (82,400 -> 82400)
+            if (parts[1].length === 3) {
+                str = str.replace(/,/g, '');
             } else {
-                if (modalResolver) modalResolver(null);
+                // Anggap desimal (0,000172 -> 0.000172)
+                str = str.replace(',', '.');
             }
-        } catch (e) {
-            console.error("Error resolving modal:", e);
-            if (modalResolver) modalResolver(null);
+        }
+        // Jika HANYA ada titik (misal 82.400 atau 0.000172)
+        else if (str.includes('.')) {
+            const parts = str.split('.');
+            // Jika 3 digit di belakang titik DAN bukan desimal (82.400 -> 82400)
+            if (parts[1].length === 3 && parseInt(parts[0]) > 0) {
+                str = str.replace(/\./g, '');
+            }
+        }
+        return parseFloat(str) || 0;
+    }
+
+    // --- FUNGSI MODAL (Buka, Tutup, Simpan) ---
+    function openModal(type, mode, data = null) {
+        currentAction = { type, mode, data };
+        const formContainer = document.getElementById('modalForm');
+        const title = document.getElementById('modalTitle');
+        
+        let html = '';
+        let valDate = data ? (data.date || '') : new Date().toISOString().slice(0, 16).replace('T', ' ');
+        
+        if (type === 'usdt') {
+            title.innerHTML = `<i class="fa-solid fa-dollar-sign"></i> ${mode === 'edit' ? 'Edit' : (mode === 'manual' ? 'Input Manual' : 'Konfirmasi')} USDT`;
+            html += `
+                <div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${valDate}"></div>
+                <div class="form-group"><label>Merchant:</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : ''}"></div>
+                <div class="form-group"><label>Order ID:</label><input type="text" id="mOrderId" value="${data ? (data.order_id || '') : ''}"></div>
+                <div class="form-group"><label>Nominal (IDR):</label><input type="number" id="mIdr" value="${data ? (data.idr || 0) : 0}"></div>
+                <div class="form-group"><label>Nominal (USDT):</label><input type="number" step="0.0001" id="mUsdt" value="${data ? (data.usdt || 0) : 0}"></div>
+            `;
+        } else {
+            title.innerHTML = `<i class="fa-brands fa-bitcoin"></i> ${mode === 'edit' ? 'Edit' : (mode === 'manual' ? 'Input Manual' : 'Konfirmasi')} BTC`;
+            html += `
+                <div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${valDate}"></div>
+                <div class="form-group"><label>Biaya (Fee):</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : '0 BTC'}"></div>
+                <div class="form-group"><label>Order ID:</label><input type="text" id="mOrderId" value="${data ? (data.order_id || '') : ''}"></div>
+                <div class="form-group"><label>Harga BTC:</label><input type="number" step="0.1" id="mPrice" value="${data ? (data.price_btc || 0) : 0}"></div>
+                <div class="form-group"><label>Nominal (USDT):</label><input type="number" step="0.0001" id="mUsdt" value="${data ? (data.usdt_spent || 0) : 0}"></div>
+                <div class="form-group"><label>Jumlah BTC:</label><input type="number" step="0.00000001" id="mBtc" value="${data ? (data.btc || 0) : 0}"></div>
+            `;
+        }
+
+        formContainer.innerHTML = html;
+        document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('confirmModal').classList.add('hidden');
+        currentAction = { mode: '', type: '', data: null };
+    }
+
+    async function saveModal() {
+        const date = document.getElementById('mDate').value;
+        const merchant = document.getElementById('mMerchant').value;
+        const orderId = document.getElementById('mOrderId').value;
+        
+        if (!date || !merchant || !orderId) {
+            showToast("Tanggal, Merchant/Biaya, dan Order ID wajib diisi!", true);
+            return;
+        }
+
+        let payload = { date, merchant, order_id: orderId };
+        const table = currentAction.type === 'usdt' ? 'transactions' : 'transactions_btc';
+
+        if (currentAction.type === 'usdt') {
+            payload.idr = parseInt(document.getElementById('mIdr').value) || 0;
+            payload.usdt = parseFloat(document.getElementById('mUsdt').value) || 0;
+        } else {
+            payload.price_btc = parseFloat(document.getElementById('mPrice').value) || 0;
+            payload.usdt_spent = parseFloat(document.getElementById('mUsdt').value) || 0;
+            payload.btc = parseFloat(document.getElementById('mBtc').value) || 0;
+        }
+
+        try {
+            if (currentAction.mode === 'edit') {
+                const { error } = await supabaseClient.from(table).update(payload).eq('id', currentAction.data.id);
+                if (error) throw error;
+                showToast("Data berhasil diupdate!");
+            } else {
+                // Untuk insert, kita cegah duplikasi order_id
+                const { data: existing } = await supabaseClient.from(table).select('id').eq('order_id', orderId);
+                if (existing && existing.length > 0) {
+                    showToast("Order ID sudah ada di database!", true);
+                    return;
+                }
+                
+                const { error } = await supabaseClient.from(table).insert([payload]);
+                if (error) throw error;
+                showToast("Data berhasil disimpan!");
+            }
+            closeModal();
+            fetchData();
+        } catch (error) {
+            console.error(error);
+            showToast("Error DB: " + error.message, true);
         }
     }
 
+    // --- LOGIKA UPLOAD & OCR ---
     document.getElementById('fileInputUsdt').addEventListener('change', function(e) { handleFiles(this.files, 'usdt'); });
     document.getElementById('fileInputBtc').addEventListener('change', function(e) { handleFiles(this.files, 'btc'); });
 
@@ -301,26 +348,14 @@
         const worker = await Tesseract.createWorker('ind+eng');
 
         for (let i = 0; i < files.length; i++) {
-            statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses gambar ${i + 1} dari ${files.length}...`;
+            statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses gambar ${i + 1}...`;
             try {
                 const { data: { text } } = await worker.recognize(files[i]);
                 const parsedData = parseTransactionText(text, type);
                 
                 if (parsedData) {
-                    // MUNCULKAN MODAL KONFIRMASI
-                    const confirmedData = await askConfirmation(parsedData, type);
-                    
-                    if (confirmedData) {
-                        const table = type === 'usdt' ? 'transactions' : 'transactions_btc';
-                        const { error } = await supabaseClient.from(table).insert([confirmedData]);
-                        if (error) {
-                            showToast("Error DB: " + error.message, true);
-                        } else {
-                            showToast("Transaksi " + type.toUpperCase() + " tersimpan!");
-                        }
-                    } else {
-                        showToast("Transaksi dibatalkan", true);
-                    }
+                    // Buka modal untuk konfirmasi (mode 'ocr')
+                    openModal(type, 'ocr', parsedData);
                 } else {
                     showToast("Gagal baca gambar " + type.toUpperCase(), true);
                 }
@@ -332,7 +367,6 @@
         await worker.terminate();
         statusDiv.classList.remove('active');
         document.getElementById(type === 'usdt' ? 'fileInputUsdt' : 'fileInputBtc').value = '';
-        fetchData();
     }
 
     function parseTransactionText(text, type) {
@@ -360,7 +394,6 @@
             if (idr === 0 || usdt === 0) return null;
             return { date, merchant, order_id: orderId, idr, usdt };
         } else {
-            // LOGIKA BTC (FOKUS RIWAYAT TERISI)
             const idMatch = text.match(/(?:ID Pesanan)\s*([\d]+)/i);
             const orderId = idMatch ? idMatch[1] : 'BTC-' + Date.now();
 
@@ -391,6 +424,7 @@
         }
     }
 
+    // --- RENDER DATA & CRUD ---
     async function fetchData() {
         try {
             const { data } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
@@ -420,7 +454,7 @@
                 <td class="text-right val-idr">Rp ${Number(tx.idr).toLocaleString('id-ID')}</td>
                 <td class="text-right val-usdt">${Number(tx.usdt).toLocaleString('id-ID', {minimumFractionDigits: 4})}</td>
                 <td><div class="action-btns">
-                    <button class="btn-edit" onclick="editTx(${tx.id}, 'transactions', '${tx.merchant}', ${tx.idr}, ${tx.usdt}, 'usdt')"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-edit" onclick="openModal('usdt', 'edit', ${JSON.stringify(tx).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions')"><i class="fa-solid fa-xmark"></i></button>
                 </div></td>`;
             tbody.appendChild(tr);
@@ -448,7 +482,7 @@
                 <td class="text-right val-usdt">${Number(tx.usdt_spent).toLocaleString('id-ID', {minimumFractionDigits: 4})} USDT</td>
                 <td class="text-right val-btc">${Number(tx.btc).toLocaleString('id-ID', {minimumFractionDigits: 8})}</td>
                 <td><div class="action-btns">
-                    <button class="btn-edit" onclick="editTxBtc(${tx.id}, '${tx.merchant}', ${tx.price_btc || 0}, ${tx.usdt_spent}, ${tx.btc})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-edit" onclick="openModal('btc', 'edit', ${JSON.stringify(tx).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions_btc')"><i class="fa-solid fa-xmark"></i></button>
                 </div></td>`;
             tbody.appendChild(tr);
@@ -456,51 +490,6 @@
         document.getElementById('totalTxBtc').innerText = transactions.length;
         document.getElementById('totalUsdtSpent').innerText = totalUsdtSpent.toLocaleString('id-ID', {minimumFractionDigits: 4}) + ' USDT';
         document.getElementById('totalBtc').innerText = totalAsset.toLocaleString('id-ID', {minimumFractionDigits: 8}) + ' BTC';
-    }
-
-    async function editTx(id, table, oldMerchant, oldIdr, oldUsdt, type) {
-        let newMerchant = prompt("Edit Nama Merchant:", oldMerchant);
-        if (newMerchant === null) return;
-        if (newMerchant.trim() === "") newMerchant = oldMerchant;
-
-        let newIdr = prompt("Edit Nominal IDR:", oldIdr);
-        if (newIdr === null) return;
-        newIdr = parseInt(newIdr.replace(/\./g, ''));
-        if (isNaN(newIdr)) newIdr = oldIdr;
-
-        let newUsdt = prompt("Edit Nominal USDT:", oldUsdt);
-        if (newUsdt === null) return;
-        newUsdt = parseFloat(newUsdt.replace(',', '.'));
-        if (isNaN(newUsdt)) newUsdt = oldUsdt;
-
-        const { error } = await supabaseClient.from(table).update({ merchant: newMerchant, idr: newIdr, usdt: newUsdt }).eq('id', id);
-        if (error) showToast("Gagal update", true);
-        else { showToast("Berhasil diupdate!"); fetchData(); }
-    }
-
-    async function editTxBtc(id, oldFee, oldPrice, oldUsdtSpent, oldBtc) {
-        let newFee = prompt("Edit Biaya (Fee):", oldFee);
-        if (newFee === null) return;
-        if (newFee.trim() === "") newFee = oldFee;
-
-        let newPrice = prompt("Edit Harga BTC:", oldPrice);
-        if (newPrice === null) return;
-        newPrice = parseFloat(newPrice.replace(/\./g, ''));
-        if (isNaN(newPrice)) newPrice = oldPrice;
-
-        let newUsdtSpent = prompt("Edit Nominal USDT:", oldUsdtSpent);
-        if (newUsdtSpent === null) return;
-        newUsdtSpent = parseFloat(newUsdtSpent.replace(',', '.'));
-        if (isNaN(newUsdtSpent)) newUsdtSpent = oldUsdtSpent;
-
-        let newBtc = prompt("Edit Nominal BTC:", oldBtc);
-        if (newBtc === null) return;
-        newBtc = parseFloat(newBtc.replace(',', '.'));
-        if (isNaN(newBtc)) newBtc = oldBtc;
-
-        const { error } = await supabaseClient.from('transactions_btc').update({ merchant: newFee, price_btc: newPrice, usdt_spent: newUsdtSpent, btc: newBtc }).eq('id', id);
-        if (error) showToast("Gagal update", true);
-        else { showToast("Berhasil diupdate!"); fetchData(); }
     }
 
     async function deleteTx(id, table) {
