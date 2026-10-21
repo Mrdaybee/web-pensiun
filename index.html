@@ -9,26 +9,37 @@
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; --text-muted: #94a3b8; --primary: #3b82f6; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --border: #334155; --gradient-1: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%); --gradient-2: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%); --gradient-3: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }
+        :root { --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; --text-muted: #94a3b8; --primary: #3b82f6; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --border: #334155; --gradient-1: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%); --gradient-2: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%); --gradient-3: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); --gradient-btc: linear-gradient(135deg, #f97316 0%, #eab308 100%); }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: var(--text); padding: 30px 20px; min-height: 100vh; }
         .container { max-width: 1200px; margin: 0 auto; }
+        
+        /* Tabs Menu */
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .tab-btn { background: transparent; color: var(--text-muted); border: none; font-size: 18px; font-weight: 600; cursor: pointer; padding: 10px 20px; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
+        .tab-btn:hover { background: rgba(255,255,255,0.05); }
+        .tab-btn.active { background: var(--card-bg); color: var(--primary); border: 1px solid var(--border); }
+        .tab-btn.active-btc { background: var(--card-bg); color: #f97316; border: 1px solid var(--border); }
+        
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
         .header h1 { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
-        .header h1 i { color: var(--primary); }
         .header p { color: var(--text-muted); margin-top: 5px; font-size: 14px; }
+        
         .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .card { background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border); position: relative; overflow: hidden; transition: transform 0.3s ease; }
         .card:hover { transform: translateY(-5px); }
         .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
         .card.idr::before { background: var(--gradient-1); }
         .card.usdt::before { background: var(--gradient-2); }
+        .card.btc::before { background: var(--gradient-btc); }
         .card.tx::before { background: var(--gradient-3); }
         .card-title { color: var(--text-muted); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .card-value { font-size: 32px; font-weight: 700; }
         .idr .card-value { color: #2dd4bf; }
         .usdt .card-value { color: #d946ef; }
+        .btc .card-value { color: #f97316; }
         .tx .card-value { color: #f59e0b; }
+        
         .upload-section { background: var(--card-bg); border: 2px dashed var(--border); border-radius: 16px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s ease; margin-bottom: 30px; position: relative; }
         .upload-section:hover, .upload-section.dragover { border-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
         .upload-icon { font-size: 48px; color: var(--primary); margin-bottom: 15px; animation: float 3s ease-in-out infinite; }
@@ -37,6 +48,7 @@
         .status-text { margin-top: 15px; font-weight: 600; color: var(--primary); font-size: 14px; display: none; }
         .status-text.active { display: block; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
         .table-container { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
@@ -47,8 +59,8 @@
         .text-right { text-align: right; }
         .val-idr { font-weight: 600; color: #e2e8f0; }
         .val-usdt { font-weight: 700; color: #2dd4bf; }
+        .val-btc { font-weight: 700; color: #f97316; }
         
-        /* Tombol Aksi */
         .action-btns { display: flex; gap: 8px; justify-content: center; }
         .btn-edit { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
         .btn-edit:hover { background: var(--warning); color: white; }
@@ -62,58 +74,99 @@
         #toast { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); font-weight: 600; font-size: 14px; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; z-index: 1000; }
         #toast.show { transform: translateY(0); opacity: 1; }
         #toast.error { background: var(--danger); }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="header">
-        <div>
-            <h1><i class="fa-solid fa-chart-pie"></i> Aset Pensiun</h1>
-            <p>Sistem cerdas pelacak transaksi USDT Anda.</p>
+    <!-- TABS MENU -->
+    <div class="tabs">
+        <button id="tabBtnUsdt" class="tab-btn active" onclick="switchTab('usdt')"><i class="fa-brands fa-bitcoin"></i> Aset USDT</button>
+        <button id="tabBtnBtc" class="tab-btn" onclick="switchTab('btc')"><i class="fa-brands fa-bitcoin"></i> Aset Bitcoin (BTC)</button>
+    </div>
+
+    <!-- SECTION USDT -->
+    <div id="sectionUsdt">
+        <div class="header">
+            <div>
+                <h1><i class="fa-solid fa-chart-pie" style="color: var(--primary);"></i> Aset USDT</h1>
+                <p>Sistem cerdas pelacak transaksi USDT Anda.</p>
+            </div>
+        </div>
+        <div class="dashboard">
+            <div class="card idr"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Pengeluaran</div><div class="card-value" id="totalIdr">Rp 0</div></div>
+            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-coins"></i> Total USDT</div><div class="card-value" id="totalUsdt">0.0000 USDT</div></div>
+            <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTx">0</div></div>
+        </div>
+        <div class="upload-section" onclick="document.getElementById('fileInputUsdt').click()">
+            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+            <h3>Tarik & Lepas Screenshot USDT di Sini</h3>
+            <input type="file" id="fileInputUsdt" accept="image/*" multiple>
+            <div class="status-text" id="statusTextUsdt"></div>
+        </div>
+        <div class="table-header">
+            <h2><i class="fa-solid fa-list-ul"></i> Riwayat Transaksi USDT</h2>
+            <button class="btn-clear" onclick="clearAllData('transactions')"><i class="fa-solid fa-trash"></i> Hapus Semua</button>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Tanggal</th><th>Merchant</th><th>Order ID</th><th class="text-right">Nominal (IDR)</th><th class="text-right">USDT</th><th style="text-align: center;">Aksi</th></tr></thead>
+                <tbody id="tableBodyUsdt"></tbody>
+            </table>
         </div>
     </div>
-    <div class="dashboard">
-        <div class="card idr"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Pengeluaran</div><div class="card-value" id="totalIdr">Rp 0</div></div>
-        <div class="card usdt"><div class="card-title"><i class="fa-brands fa-bitcoin"></i> Total USDT</div><div class="card-value" id="totalUsdt">0.0000 USDT</div></div>
-        <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTx">0</div></div>
-    </div>
-    <div class="upload-section" id="dropZone" onclick="document.getElementById('fileInput').click()">
-        <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-        <h3>Tarik & Lepas Screenshot di Sini</h3>
-        <p style="color: var(--text-muted); margin-top: 8px; font-size: 14px;">Atau klik untuk memilih file gambar</p>
-        <input type="file" id="fileInput" accept="image/*" multiple>
-        <div class="status-text" id="statusText"></div>
-    </div>
-    <div class="table-header">
-        <h2><i class="fa-solid fa-list-ul"></i> Riwayat Transaksi</h2>
-        <button class="btn-clear" onclick="clearAllData()"><i class="fa-solid fa-trash"></i> Hapus Semua</button>
-    </div>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Tanggal</th><th>Merchant</th><th>Order ID</th>
-                    <th class="text-right">Nominal (IDR)</th><th class="text-right">USDT</th>
-                    <th style="text-align: center;">Status</th><th style="text-align: center;">Aksi</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+
+    <!-- SECTION BTC -->
+    <div id="sectionBtc" class="hidden">
+        <div class="header">
+            <div>
+                <h1><i class="fa-brands fa-bitcoin" style="color: #f97316;"></i> Aset Bitcoin</h1>
+                <p>Sistem cerdas pelacak transaksi Bitcoin Anda.</p>
+            </div>
+        </div>
+        <div class="dashboard">
+            <div class="card idr"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Pengeluaran</div><div class="card-value" id="totalIdrBtc">Rp 0</div></div>
+            <div class="card btc"><div class="card-title"><i class="fa-brands fa-bitcoin"></i> Total BTC</div><div class="card-value" id="totalBtc">0.00000000 BTC</div></div>
+            <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTxBtc">0</div></div>
+        </div>
+        <div class="upload-section" onclick="document.getElementById('fileInputBtc').click()">
+            <i class="fa-solid fa-cloud-arrow-up upload-icon" style="color: #f97316;"></i>
+            <h3>Tarik & Lepas Screenshot BTC di Sini</h3>
+            <input type="file" id="fileInputBtc" accept="image/*" multiple>
+            <div class="status-text" id="statusTextBtc"></div>
+        </div>
+        <div class="table-header">
+            <h2><i class="fa-solid fa-list-ul"></i> Riwayat Transaksi Bitcoin</h2>
+            <button class="btn-clear" onclick="clearAllData('transactions_btc')"><i class="fa-solid fa-trash"></i> Hapus Semua</button>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Tanggal</th><th>Merchant</th><th>Order ID</th><th class="text-right">Nominal (IDR)</th><th class="text-right">BTC</th><th style="text-align: center;">Aksi</th></tr></thead>
+                <tbody id="tableBodyBtc"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 <div id="toast"><i class="fa-solid fa-check-circle"></i> <span>Berhasil!</span></div>
 <script>
     const SUPABASE_URL = 'https://vbkpvhyizdrlzxehojzw.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_ebHFFHrTowLkOCJXEbClBw_MrE6t0hs';
-
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const dropZone = document.getElementById('dropZone');
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-    dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
-    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
-    document.getElementById('fileInput').addEventListener('change', function(e) { handleFiles(this.files); });
-    document.addEventListener('DOMContentLoaded', fetchData);
+    // --- LOGIKA TAB MENU ---
+    function switchTab(tab) {
+        if(tab === 'usdt') {
+            document.getElementById('sectionUsdt').classList.remove('hidden');
+            document.getElementById('sectionBtc').classList.add('hidden');
+            document.getElementById('tabBtnUsdt').className = 'tab-btn active';
+            document.getElementById('tabBtnBtc').className = 'tab-btn';
+        } else {
+            document.getElementById('sectionUsdt').classList.add('hidden');
+            document.getElementById('sectionBtc').classList.remove('hidden');
+            document.getElementById('tabBtnUsdt').className = 'tab-btn';
+            document.getElementById('tabBtnBtc').className = 'tab-btn active-btc';
+        }
+    }
 
     function showToast(message, isError = false) {
         const toast = document.getElementById('toast');
@@ -123,9 +176,13 @@
         setTimeout(() => { toast.className = ''; }, 3000);
     }
 
-    async function handleFiles(files) {
+    // --- UPLOAD & OCR ---
+    document.getElementById('fileInputUsdt').addEventListener('change', function(e) { handleFiles(this.files, 'usdt'); });
+    document.getElementById('fileInputBtc').addEventListener('change', function(e) { handleFiles(this.files, 'btc'); });
+
+    async function handleFiles(files, type) {
         if (files.length === 0) return;
-        const statusDiv = document.getElementById('statusText');
+        const statusDiv = document.getElementById(type === 'usdt' ? 'statusTextUsdt' : 'statusTextBtc');
         statusDiv.classList.add('active');
         const worker = await Tesseract.createWorker('ind+eng');
 
@@ -133,65 +190,78 @@
             statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses gambar ${i + 1} dari ${files.length}...`;
             try {
                 const { data: { text } } = await worker.recognize(files[i]);
-                const parsedData = parseTransactionText(text);
+                const parsedData = parseTransactionText(text, type);
                 
                 if (parsedData) {
-                    const { error } = await supabaseClient.from('transactions').insert([{
-                        date: parsedData.date, merchant: parsedData.merchant, order_id: parsedData.orderId, idr: parsedData.idr, usdt: parsedData.usdt
-                    }]);
+                    const table = type === 'usdt' ? 'transactions' : 'transactions_btc';
+                    const { error } = await supabaseClient.from(table).insert([parsedData]);
                     if (error) console.log("Skip/Error:", error.message);
                 }
             } catch (error) { console.error("Error scan:", error); }
         }
         await worker.terminate();
         statusDiv.classList.remove('active');
-        document.getElementById('fileInput').value = '';
-        showToast(`Selesai memproses ${files.length} gambar!`);
+        document.getElementById(type === 'usdt' ? 'fileInputUsdt' : 'fileInputBtc').value = '';
+        showToast(`Selesai memproses ${files.length} gambar ${type.toUpperCase()}!`);
         fetchData();
     }
 
-    function parseTransactionText(text) {
+    function parseTransactionText(text, type) {
         const idMatch = text.match(/\b(\d{17,20})\b/);
         const orderId = idMatch ? idMatch[1] : 'ID-' + Date.now();
+        
         const idrMatches = [...text.matchAll(/(\d{1,3}(?:\.\d{3})+)\s*IDR/g)];
         let idr = 0;
         if (idrMatches.length > 0) {
             const amounts = idrMatches.map(m => parseInt(m[1].replace(/\./g, '')));
             idr = Math.max(...amounts);
         }
-        const usdtMatch = text.match(/(\d+,\d+)\s*USDT/);
-        const usdt = usdtMatch ? parseFloat(usdtMatch[1].replace(',', '.')) : 0;
+        
         const dateMatch = text.match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/);
         const date = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 16).replace('T', ' ');
+        
         let merchant = "Unknown";
         const knownMerchants = ["Cv_Rpl", "SUIFONG", "CENTURY_PRIME", "FreeNoFee", "SpeedyCashEXC", "ROFIQ_VIIP", "Men_fasttrade", "GuitarHero", "FARZ-EX"];
         for (let m of knownMerchants) { if (text.includes(m)) { merchant = m; break; } }
-        if (idr === 0 || usdt === 0) return null;
-        return { date, merchant, orderId, idr, usdt };
-    }
 
-    async function fetchData() {
-        try {
-            const { data, error } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
-            if (error) throw error;
-            renderTable(data);
-        } catch (error) {
-            console.error("Gagal ambil data:", error);
-            showToast("Gagal ambil data", true);
+        if (type === 'usdt') {
+            const match = text.match(/(\d+,\d+)\s*USDT/);
+            const val = match ? parseFloat(match[1].replace(',', '.')) : 0;
+            if (idr === 0 || val === 0) return null;
+            return { date, merchant, order_id: orderId, idr, usdt: val };
+        } else {
+            // Regex BTC biasanya pakai 8 desimal atau format titik/koma
+            const match = text.match(/(\d+[,.]\d+)\s*BTC/);
+            const val = match ? parseFloat(match[1].replace(',', '.')) : 0;
+            if (idr === 0 || val === 0) return null;
+            return { date, merchant, order_id: orderId, idr, btc: val };
         }
     }
 
-    function renderTable(transactions) {
-        const tbody = document.getElementById('tableBody');
+    // --- FETCH DATA ---
+    async function fetchData() {
+        // Fetch USDT
+        try {
+            const { data } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
+            renderTableUsdt(data);
+        } catch (e) { console.error(e); }
+
+        // Fetch BTC
+        try {
+            const { data } = await supabaseClient.from('transactions_btc').select('*').order('date', { ascending: false });
+            renderTableBtc(data);
+        } catch (e) { console.error(e); }
+    }
+
+    function renderTableUsdt(transactions) {
+        const tbody = document.getElementById('tableBodyUsdt');
         tbody.innerHTML = '';
-        let totalIdr = 0, totalUsdt = 0;
-        if (transactions.length === 0) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data.</td></tr>`;
+        let totalIdr = 0, totalAsset = 0;
+        if (transactions.length === 0) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data.</td></tr>`;
         
         transactions.forEach(tx => {
             totalIdr += Number(tx.idr);
-            totalUsdt += Number(tx.usdt);
-            
-            // Tombol Edit dan Hapus
+            totalAsset += Number(tx.usdt);
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
@@ -199,67 +269,84 @@
                 <td style="font-family: monospace; color: #64748b; font-size: 13px;">${tx.order_id}</td>
                 <td class="text-right val-idr">Rp ${Number(tx.idr).toLocaleString('id-ID')}</td>
                 <td class="text-right val-usdt">${Number(tx.usdt).toLocaleString('id-ID', {minimumFractionDigits: 4})}</td>
-                <td style="text-align: center;"><span class="badge"><i class="fa-solid fa-check"></i> Sukses</span></td>
-                <td>
-                    <div class="action-btns">
-                        <button class="btn-edit" onclick="editTx(${tx.id}, '${tx.merchant}', ${tx.idr}, ${tx.usdt})"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn-delete" onclick="deleteTx(${tx.id})"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                </td>`;
+                <td><div class="action-btns">
+                    <button class="btn-edit" onclick="editTx(${tx.id}, 'transactions', '${tx.merchant}', ${tx.idr}, ${tx.usdt}, 'usdt')"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions')"><i class="fa-solid fa-xmark"></i></button>
+                </div></td>`;
             tbody.appendChild(tr);
         });
         document.getElementById('totalTx').innerText = transactions.length;
         document.getElementById('totalIdr').innerText = 'Rp ' + totalIdr.toLocaleString('id-ID');
-        document.getElementById('totalUsdt').innerText = totalUsdt.toLocaleString('id-ID', {minimumFractionDigits: 4}) + ' USDT';
+        document.getElementById('totalUsdt').innerText = totalAsset.toLocaleString('id-ID', {minimumFractionDigits: 4}) + ' USDT';
     }
 
-    // Fungsi Edit Transaksi
-    async function editTx(id, oldMerchant, oldIdr, oldUsdt) {
-        // 1. Input Merchant Baru
+    function renderTableBtc(transactions) {
+        const tbody = document.getElementById('tableBodyBtc');
+        tbody.innerHTML = '';
+        let totalIdr = 0, totalAsset = 0;
+        if (transactions.length === 0) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data.</td></tr>`;
+        
+        transactions.forEach(tx => {
+            totalIdr += Number(tx.idr);
+            totalAsset += Number(tx.btc);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
+                <td><strong style="color: #e2e8f0;">${tx.merchant}</strong></td>
+                <td style="font-family: monospace; color: #64748b; font-size: 13px;">${tx.order_id}</td>
+                <td class="text-right val-idr">Rp ${Number(tx.idr).toLocaleString('id-ID')}</td>
+                <td class="text-right val-btc">${Number(tx.btc).toLocaleString('id-ID', {minimumFractionDigits: 8})}</td>
+                <td><div class="action-btns">
+                    <button class="btn-edit" onclick="editTx(${tx.id}, 'transactions_btc', '${tx.merchant}', ${tx.idr}, ${tx.btc}, 'btc')"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions_btc')"><i class="fa-solid fa-xmark"></i></button>
+                </div></td>`;
+            tbody.appendChild(tr);
+        });
+        document.getElementById('totalTxBtc').innerText = transactions.length;
+        document.getElementById('totalIdrBtc').innerText = 'Rp ' + totalIdr.toLocaleString('id-ID');
+        document.getElementById('totalBtc').innerText = totalAsset.toLocaleString('id-ID', {minimumFractionDigits: 8}) + ' BTC';
+    }
+
+    // --- CRUD ---
+    async function editTx(id, table, oldMerchant, oldIdr, oldAsset, type) {
         let newMerchant = prompt("Edit Nama Merchant:", oldMerchant);
-        if (newMerchant === null) return; // Batal
-        if (newMerchant.trim() === "") newMerchant = oldMerchant; // Kalau kosong, balikin ke lama
+        if (newMerchant === null) return;
+        if (newMerchant.trim() === "") newMerchant = oldMerchant;
 
-        // 2. Input IDR Baru
-        let newIdr = prompt("Edit Nominal IDR (Angka saja, tanpa titik):", oldIdr);
-        if (newIdr === null) return; // Batal
-        newIdr = parseInt(newIdr.replace(/\./g, '')); // Bersihkan titik jika user ngetik pake titik
-        if (isNaN(newIdr) || newIdr === 0) newIdr = oldIdr; // Validasi
+        let newIdr = prompt("Edit Nominal IDR (Angka saja):", oldIdr);
+        if (newIdr === null) return;
+        newIdr = parseInt(newIdr.replace(/\./g, ''));
+        if (isNaN(newIdr) || newIdr === 0) newIdr = oldIdr;
 
-        // 3. Input USDT Baru
-        let newUsdt = prompt("Edit Nominal USDT (Pakai koma):", oldUsdt);
-        if (newUsdt === null) return; // Batal
-        newUsdt = parseFloat(newUsdt.replace(',', '.')); // Ubah koma jadi titik buat database
-        if (isNaN(newUsdt) || newUsdt === 0) newUsdt = oldUsdt; // Validasi
+        let newAsset = prompt(`Edit Nominal ${type.toUpperCase()} (Pakai koma):`, oldAsset);
+        if (newAsset === null) return;
+        newAsset = parseFloat(newAsset.replace(',', '.'));
+        if (isNaN(newAsset) || newAsset === 0) newAsset = oldAsset;
 
-        // 4. Update ke Supabase
-        const { error } = await supabaseClient
-            .from('transactions')
-            .update({ merchant: newMerchant, idr: newIdr, usdt: newUsdt })
-            .eq('id', id);
+        const updateData = { merchant: newMerchant, idr: newIdr };
+        if (type === 'usdt') updateData.usdt = newAsset;
+        else updateData.btc = newAsset;
 
-        if (error) {
-            showToast("Gagal update data", true);
-            console.error(error);
-        } else {
-            showToast("Transaksi berhasil diupdate!");
-            fetchData();
-        }
+        const { error } = await supabaseClient.from(table).update(updateData).eq('id', id);
+        if (error) showToast("Gagal update", true);
+        else { showToast("Berhasil diupdate!"); fetchData(); }
     }
 
-    async function deleteTx(id) {
+    async function deleteTx(id, table) {
         if(confirm("Hapus transaksi ini?")) {
-            await supabaseClient.from('transactions').delete().eq('id', id);
-            showToast("Transaksi dihapus"); fetchData();
+            await supabaseClient.from(table).delete().eq('id', id);
+            showToast("Dihapus"); fetchData();
         }
     }
 
-    async function clearAllData() {
-        if(confirm("Hapus SEMUA data?")) {
-            await supabaseClient.from('transactions').delete().gt('id', 0);
+    async function clearAllData(table) {
+        if(confirm("Hapus SEMUA data di tabel ini?")) {
+            await supabaseClient.from(table).delete().gt('id', 0);
             showToast("Semua data dibersihkan"); fetchData();
         }
     }
+
+    document.addEventListener('DOMContentLoaded', fetchData);
 </script>
 </body>
 </html>
