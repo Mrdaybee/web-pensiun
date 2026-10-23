@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Dana Pensiun</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0f172a">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
@@ -32,7 +34,8 @@
         .tab-btn.active { background: var(--card-bg); color: var(--primary); border: 1px solid var(--border); }
         .tab-btn.active-btc { background: var(--card-bg); color: #f97316; border: 1px solid var(--border); }
         
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        /* CARDS */
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .card { background: var(--card-bg); padding: 20px; border-radius: 16px; border: 1px solid var(--border); position: relative; overflow: hidden; transition: transform 0.3s ease; }
         .card:hover { transform: translateY(-3px); }
         .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
@@ -43,7 +46,7 @@
         .card.pl::before { background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); }
         
         .card-title { color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-        .card-value { font-size: 24px; font-weight: 700; }
+        .card-value { font-size: 22px; font-weight: 700; }
         .idr .card-value { color: #2dd4bf; }
         .usdt .card-value { color: #d946ef; }
         .btc .card-value { color: #f97316; }
@@ -52,93 +55,84 @@
         .pl.negative .card-value { color: #ef4444; }
         .card-sub { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
 
-        .action-row { display: flex; gap: 15px; margin-bottom: 30px; }
-        .upload-section { flex: 1; background: var(--card-bg); border: 2px dashed var(--border); border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative; }
-        .upload-section:hover, .upload-section.dragover { border-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
+        /* GOAL & TARGET */
+        .goal-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .goal-header { display: flex; justify-content: space-between; align-items: center; }
+        .goal-header h3 { font-size: 14px; color: var(--text-muted); }
+        .goal-inputs { display: flex; gap: 10px; align-items: center; }
+        .goal-inputs input { background: var(--bg); border: 1px solid var(--border); color: white; padding: 8px 12px; border-radius: 8px; outline: none; width: 120px; }
+        .goal-inputs button { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .progress-bar { width: 100%; height: 10px; background: var(--bg); border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; background: var(--gradient-1); width: 0%; transition: width 0.5s; }
+        .progress-fill.btc-goal { background: var(--gradient-btc); }
+
+        /* ACTION ROW */
+        .action-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .upload-section { flex: 1; background: var(--card-bg); border: 2px dashed var(--border); border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
+        .upload-section:hover { border-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
         .upload-icon { font-size: 28px; color: var(--primary); margin-bottom: 5px; }
         input[type="file"] { display: none; }
-        
         .btn-manual { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 0 30px; border-radius: 16px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease; min-width: 150px; }
         .btn-manual:hover { border-color: var(--success); color: var(--success); background: rgba(16, 185, 129, 0.05); }
-        .btn-manual i { font-size: 24px; }
 
-        .status-text { margin-top: 10px; font-weight: 600; color: var(--primary); font-size: 12px; display: none; }
-        .status-text.active { display: block; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        /* TABLE & TOOLS */
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .table-actions { display: flex; gap: 10px; align-items: center; }
+        .filter-select { background: var(--card-bg); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 8px; outline: none; }
+        .btn-export { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .btn-export:hover { background: var(--success); color: white; }
+        .btn-clear { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .btn-clear:hover { border-color: var(--danger); color: var(--danger); }
         
-        .table-container { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+        .table-container { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
-        th { background-color: rgba(15, 23, 42, 0.5); color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        th { background-color: rgba(15, 23, 42, 0.5); color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
         tr:last-child td { border-bottom: none; }
-        tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
         .text-right { text-align: right; }
         .val-idr { font-weight: 600; color: #e2e8f0; }
         .val-usdt { font-weight: 700; color: #2dd4bf; }
         .val-btc { font-weight: 700; color: #f97316; }
         .val-fee { color: #94a3b8; font-size: 13px; }
-        
         .action-btns { display: flex; gap: 8px; justify-content: center; }
-        .btn-edit { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
-        .btn-edit:hover { background: var(--warning); color: white; }
-        .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
-        .btn-delete:hover { background: var(--danger); color: white; }
-        
-        .btn-clear { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
-        .btn-clear:hover { border-color: var(--danger); color: var(--danger); }
-        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .table-header h2 { font-size: 18px; font-weight: 600; }
-        
-        #toast { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); font-weight: 600; font-size: 14px; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; z-index: 1000; }
+        .btn-edit { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
+        .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
+        .status-text { margin-top: 10px; font-weight: 600; color: var(--primary); font-size: 12px; display: none; }
+        .status-text.active { display: block; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* MODAL, TOAST, LOGIN */
+        #toast { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; padding: 15px 25px; border-radius: 10px; z-index: 1000; transform: translateY(100px); opacity: 0; transition: 0.3s; }
         #toast.show { transform: translateY(0); opacity: 1; }
         #toast.error { background: var(--danger); }
         .hidden { display: none !important; }
-
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .modal-content { background: var(--card-bg); width: 90%; max-width: 500px; border-radius: 16px; border: 1px solid var(--border); padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-        .modal-content h2 { font-size: 20px; margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        .modal-content { background: var(--card-bg); width: 90%; max-width: 500px; border-radius: 16px; border: 1px solid var(--border); padding: 25px; }
+        .modal-content h2 { font-size: 20px; margin-bottom: 20px; color: var(--primary); }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px; }
-        .form-group input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 15px; border-radius: 8px; font-size: 14px; outline: none; }
-        .form-group input:focus { border-color: var(--primary); }
+        .form-group input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 15px; border-radius: 8px; outline: none; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
-        .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        .btn-save { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        .btn-save:hover { background: #2563eb; }
-
+        .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+        .btn-save { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
         #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 5000; }
-        .login-box { background: var(--card-bg); padding: 40px; border-radius: 16px; border: 1px solid var(--border); width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-        .login-box h1 { font-size: 24px; margin-bottom: 30px; color: var(--primary); }
-        .login-box .form-group { text-align: left; }
-        .btn-login { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px; margin-top: 10px; transition: 0.2s; }
-        .btn-login:hover { background: #2563eb; }
+        .login-box { background: var(--card-bg); padding: 40px; border-radius: 16px; border: 1px solid var(--border); width: 90%; max-width: 400px; text-align: center; }
+        .btn-login { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 10px; }
     </style>
 </head>
 <body>
-
-<!-- SCREEN LOGIN -->
 <div id="loginScreen">
     <div class="login-box">
         <h1><i class="fa-solid fa-lock"></i> Login Admin</h1>
-        <div class="form-group">
-            <label>Username</label>
-            <input type="text" id="loginUser" placeholder="Masukkan username (mrbee)">
-        </div>
-        <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="loginPass" placeholder="Masukkan password">
-        </div>
+        <div class="form-group" style="text-align:left"><label>Username</label><input type="text" id="loginUser"></div>
+        <div class="form-group" style="text-align:left"><label>Password</label><input type="password" id="loginPass"></div>
         <button class="btn-login" onclick="handleLogin()">Masuk</button>
     </div>
 </div>
 
-<!-- APLIKASI UTAMA -->
 <div class="container hidden" id="mainApp">
     <div class="header">
-        <div class="header-left">
-            <h1><i class="fa-solid fa-chart-pie" style="color: var(--primary);"></i> Aset Pensiun</h1>
-            <p>Portofolio & Analisis Keuntungan.</p>
-        </div>
+        <div class="header-left"><h1><i class="fa-solid fa-chart-pie" style="color: var(--primary);"></i> Aset Pensiun</h1><p>Portofolio & Analisis Keuntungan.</p></div>
         <div class="header-actions">
             <button class="btn-refresh" id="btnRefresh" onclick="fetchLivePrices()"><i class="fa-solid fa-rotate-right"></i> Refresh Harga</button>
             <button class="btn-logout" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
@@ -153,79 +147,79 @@
     <!-- SECTION USDT -->
     <div id="sectionUsdt">
         <div class="dashboard">
-            <div class="card idr"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Modal (IDR)</div><div class="card-value" id="totalIdr">Rp 0</div></div>
-            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-coins"></i> Total USDT</div><div class="card-value" id="totalUsdt">0.0000 USDT</div></div>
+            <div class="card idr"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Modal</div><div class="card-value" id="totalIdr">Rp 0</div></div>
+            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-coins"></i> Total USDT</div><div class="card-value" id="totalUsdt">0 USDT</div></div>
+            <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTxUsdt">0</div></div>
             <div class="card usdt"><div class="card-title"><i class="fa-solid fa-tags"></i> Rata-rata Beli</div><div class="card-value" id="avgBuyUsdt">Rp 0</div></div>
-            <div class="card idr"><div class="card-title"><i class="fa-solid fa-chart-line"></i> Harga Live (USDT/IDR)</div><div class="card-value" id="livePriceUsdt">Rp 0</div></div>
-            <div class="card idr"><div class="card-title"><i class="fa-solid fa-vault"></i> Nilai Saat Ini</div><div class="card-value" id="currentValueUsdt">Rp 0</div></div>
-            <div class="card pl" id="cardPlUsdt"><div class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Profit / Loss</div><div class="card-value" id="profitLossUsdt">Rp 0</div><div class="card-sub" id="profitLossPctUsdt">0.00%</div></div>
+            <div class="card idr"><div class="card-title"><i class="fa-solid fa-chart-line"></i> Harga Live</div><div class="card-value" id="livePriceUsdt">Rp 0</div></div>
+            <div class="card pl" id="cardPlUsdt"><div class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Profit / Loss</div><div class="card-value" id="profitLossUsdt">Rp 0</div><div class="card-sub" id="profitLossPctUsdt">0%</div></div>
         </div>
+        
+        <div class="goal-box">
+            <div class="goal-header"><h3><i class="fa-solid fa-bullseye"></i> Target USDT</h3><span id="goalTextUsdt">0 / 0 USDT (0%)</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="goalProgressUsdt"></div></div>
+            <div class="goal-inputs"><input type="number" id="inputGoalUsdt" placeholder="Target USDT"><button onclick="saveGoal('usdt')">Set Target</button></div>
+        </div>
+
         <div class="action-row">
-            <div class="upload-section" onclick="document.getElementById('fileInputUsdt').click()">
-                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                <h3>Upload Screenshot USDT</h3>
-                <input type="file" id="fileInputUsdt" accept="image/*" multiple>
-                <div class="status-text" id="statusTextUsdt"></div>
-            </div>
-            <button class="btn-manual" onclick="openModal('usdt', 'manual')">
-                <i class="fa-solid fa-plus"></i> Tambah Manual
-            </button>
+            <div class="upload-section" onclick="document.getElementById('fileInputUsdt').click()"><i class="fa-solid fa-cloud-arrow-up upload-icon"></i><h3>Upload Screenshot USDT</h3><input type="file" id="fileInputUsdt" accept="image/*" multiple><div class="status-text" id="statusTextUsdt"></div></div>
+            <button class="btn-manual" onclick="openModal('usdt', 'manual')"><i class="fa-solid fa-plus"></i> Tambah Manual</button>
         </div>
+        
         <div class="table-header">
-            <h2><i class="fa-solid fa-list-ul"></i> Riwayat Transaksi USDT</h2>
-            <button class="btn-clear" onclick="clearAllData('transactions')"><i class="fa-solid fa-trash"></i> Hapus Semua</button>
+            <h2><i class="fa-solid fa-list-ul"></i> Riwayat USDT</h2>
+            <div class="table-actions">
+                <select class="filter-select" id="filterUsdt" onchange="renderTableUsdt()"><option value="all">Semua Waktu</option></select>
+                <button class="btn-export" onclick="exportCSV('usdt')"><i class="fa-solid fa-file-csv"></i> Export</button>
+                <button class="btn-clear" onclick="clearAllData('transactions')"><i class="fa-solid fa-trash"></i> Hapus</button>
+            </div>
         </div>
         <div class="table-container">
-            <table>
-                <thead><tr><th>Tanggal</th><th>Merchant</th><th>Order ID</th><th class="text-right">Nominal (IDR)</th><th class="text-right">USDT</th><th style="text-align: center;">Aksi</th></tr></thead>
-                <tbody id="tableBodyUsdt"></tbody>
-            </table>
+            <table><thead><tr><th>Tanggal</th><th>Merchant</th><th>Order ID</th><th class="text-right">Nominal (IDR)</th><th class="text-right">USDT</th><th style="text-align: center;">Aksi</th></tr></thead><tbody id="tableBodyUsdt"></tbody></table>
         </div>
     </div>
 
     <!-- SECTION BTC -->
     <div id="sectionBtc" class="hidden">
         <div class="dashboard">
-            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Modal (USDT)</div><div class="card-value" id="totalUsdtSpent">0.0000 USDT</div></div>
-            <div class="card btc"><div class="card-title"><i class="fa-brands fa-bitcoin"></i> Total BTC</div><div class="card-value" id="totalBtc">0.00000000 BTC</div></div>
-            <div class="card btc"><div class="card-title"><i class="fa-solid fa-tags"></i> Rata-rata Beli</div><div class="card-value" id="avgBuyBtc">0.00 USDT</div></div>
-            <div class="card btc"><div class="card-title"><i class="fa-solid fa-chart-line"></i> Harga Live (BTC/USDT)</div><div class="card-value" id="livePriceBtc">0.00 USDT</div></div>
-            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-vault"></i> Nilai Saat Ini</div><div class="card-value" id="currentValueBtc">0.0000 USDT</div></div>
-            <div class="card pl" id="cardPlBtc"><div class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Profit / Loss</div><div class="card-value" id="profitLossBtc">0.0000 USDT</div><div class="card-sub" id="profitLossPctBtc">0.00%</div></div>
+            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Modal</div><div class="card-value" id="totalUsdtSpent">0 USDT</div></div>
+            <div class="card btc"><div class="card-title"><i class="fa-brands fa-bitcoin"></i> Total BTC</div><div class="card-value" id="totalBtc">0 BTC</div></div>
+            <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTxBtc">0</div></div>
+            <div class="card btc"><div class="card-title"><i class="fa-solid fa-tags"></i> Rata-rata Beli</div><div class="card-value" id="avgBuyBtc">0 USDT</div></div>
+            <div class="card btc"><div class="card-title"><i class="fa-solid fa-chart-line"></i> Harga Live</div><div class="card-value" id="livePriceBtc">0 USDT</div></div>
+            <div class="card pl" id="cardPlBtc"><div class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Profit / Loss</div><div class="card-value" id="profitLossBtc">0 USDT</div><div class="card-sub" id="profitLossPctBtc">0%</div></div>
         </div>
+
+        <div class="goal-box">
+            <div class="goal-header"><h3><i class="fa-solid fa-bullseye"></i> Target BTC</h3><span id="goalTextBtc">0 / 0 BTC (0%)</span></div>
+            <div class="progress-bar"><div class="progress-fill btc-goal" id="goalProgressBtc"></div></div>
+            <div class="goal-inputs"><input type="number" step="0.00000001" id="inputGoalBtc" placeholder="Target BTC"><button onclick="saveGoal('btc')">Set Target</button></div>
+        </div>
+
         <div class="action-row">
-            <div class="upload-section" onclick="document.getElementById('fileInputBtc').click()">
-                <i class="fa-solid fa-cloud-arrow-up upload-icon" style="color: #f97316;"></i>
-                <h3>Upload Screenshot BTC</h3>
-                <input type="file" id="fileInputBtc" accept="image/*" multiple>
-                <div class="status-text" id="statusTextBtc"></div>
-            </div>
-            <button class="btn-manual" onclick="openModal('btc', 'manual')" style="color: #f97316;">
-                <i class="fa-solid fa-plus"></i> Tambah Manual
-            </button>
+            <div class="upload-section" onclick="document.getElementById('fileInputBtc').click()"><i class="fa-solid fa-cloud-arrow-up upload-icon" style="color: #f97316;"></i><h3>Upload Screenshot BTC</h3><input type="file" id="fileInputBtc" accept="image/*" multiple><div class="status-text" id="statusTextBtc"></div></div>
+            <button class="btn-manual" onclick="openModal('btc', 'manual')" style="color: #f97316;"><i class="fa-solid fa-plus"></i> Tambah Manual</button>
         </div>
+
         <div class="table-header">
-            <h2><i class="fa-solid fa-list-ul"></i> Riwayat Transaksi Bitcoin</h2>
-            <button class="btn-clear" onclick="clearAllData('transactions_btc')"><i class="fa-solid fa-trash"></i> Hapus Semua</button>
+            <h2><i class="fa-solid fa-list-ul"></i> Riwayat BTC</h2>
+            <div class="table-actions">
+                <select class="filter-select" id="filterBtc" onchange="renderTableBtc()"><option value="all">Semua Waktu</option></select>
+                <button class="btn-export" onclick="exportCSV('btc')"><i class="fa-solid fa-file-csv"></i> Export</button>
+                <button class="btn-clear" onclick="clearAllData('transactions_btc')"><i class="fa-solid fa-trash"></i> Hapus</button>
+            </div>
         </div>
         <div class="table-container">
-            <table>
-                <thead><tr><th>Tanggal</th><th>Biaya</th><th>Order ID</th><th class="text-right">Harga (USDT)</th><th class="text-right">Nominal (USDT)</th><th class="text-right">BTC</th><th style="text-align: center;">Aksi</th></tr></thead>
-                <tbody id="tableBodyBtc"></tbody>
-            </table>
+            <table><thead><tr><th>Tanggal</th><th>Biaya</th><th>Order ID</th><th class="text-right">Harga</th><th class="text-right">Nominal (USDT)</th><th class="text-right">BTC</th><th style="text-align: center;">Aksi</th></tr></thead><tbody id="tableBodyBtc"></tbody></table>
         </div>
     </div>
 </div>
 
-<!-- MODAL UNIVERSAL -->
 <div id="confirmModal" class="modal-overlay hidden">
     <div class="modal-content">
-        <h2 id="modalTitle"><i class="fa-solid fa-clipboard-check"></i> Konfirmasi Data</h2>
+        <h2 id="modalTitle">Konfirmasi Data</h2>
         <div id="modalForm"></div>
-        <div class="modal-actions">
-            <button onclick="closeModal()" class="btn-cancel">Batal</button>
-            <button onclick="saveModal()" class="btn-save">Simpan</button>
-        </div>
+        <div class="modal-actions"><button onclick="closeModal()" class="btn-cancel">Batal</button><button onclick="saveModal()" class="btn-save">Simpan</button></div>
     </div>
 </div>
 
@@ -237,353 +231,120 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentAction = { mode: '', type: '', data: null };
-    let dataUsdt = [];
-    let dataBtc = [];
+    let dataUsdt = [], dataBtc = [];
     let livePrice = { usdtIdr: 0, btcUsdt: 0 };
+    let goals = { usdt: 0, btc: 0 };
 
-    // --- LOGIKA LOGIN ---
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error', err));
+    }
+
+    // --- LOGIN ---
     async function handleLogin() {
         let username = document.getElementById('loginUser').value.trim();
         const password = document.getElementById('loginPass').value;
-
-        if (!username || !password) { alert("Username dan Password wajib diisi!"); return; }
-
-        let email = username;
-        if (!email.includes('@')) email = `${username}@pensiun.local`;
-
+        if (!username || !password) return alert("Isi username & password!");
+        let email = username.includes('@') ? username : `${username}@pensiun.local`;
         try {
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) throw error;
-            
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             initApp(); 
-        } catch (error) {
-            alert("Login Gagal: " + error.message);
-        }
+        } catch (error) { alert("Login Gagal: " + error.message); }
     }
-
     async function handleLogout() {
         await supabaseClient.auth.signOut();
         document.getElementById('mainApp').classList.add('hidden');
         document.getElementById('loginScreen').classList.remove('hidden');
-        document.getElementById('loginUser').value = '';
-        document.getElementById('loginPass').value = '';
     }
-
     async function checkSession() {
         const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            initApp();
-        }
+        if (session) { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden'); initApp(); }
     }
     document.addEventListener('DOMContentLoaded', checkSession);
 
+    // --- INIT & GOALS ---
     function initApp() {
+        loadGoals();
         fetchData();
         fetchLivePrices();
     }
+    
+    function loadGoals() {
+        goals.usdt = parseFloat(localStorage.getItem('goal_usdt')) || 0;
+        goals.btc = parseFloat(localStorage.getItem('goal_btc')) || 0;
+        if(goals.usdt > 0) document.getElementById('inputGoalUsdt').value = goals.usdt;
+        if(goals.btc > 0) document.getElementById('inputGoalBtc').value = goals.btc;
+    }
+    function saveGoal(type) {
+        const val = parseFloat(document.getElementById(type === 'usdt' ? 'inputGoalUsdt' : 'inputGoalBtc').value) || 0;
+        goals[type] = val;
+        localStorage.setItem(`goal_${type}`, val);
+        updateDashboardSummary();
+        showToast("Target disimpan!");
+    }
 
-    // --- LOGIKA LIVE PRICE (BACA DARI PROXY VERCEL) ---
+    // --- LIVE PRICE ---
     async function fetchLivePrices() {
-        const btn = document.getElementById('btnRefresh');
-        btn.classList.add('loading');
+        const btn = document.getElementById('btnRefresh'); btn.classList.add('loading');
         try {
-            // Panggil proxy Vercel
-            const url = `/api/price?t=${Date.now()}`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('API Error');
-            
+            const response = await fetch(`/api/price?t=${Date.now()}`);
             const json = await response.json();
-            
             livePrice.usdtIdr = json.usdtIdr || 0;
             livePrice.btcUsdt = json.btcUsdt || 0;
-            
             updateDashboardSummary();
-            showToast("Harga berhasil diupdate!");
-        } catch (error) {
-            console.error("Gagal ambil harga live:", error);
-            showToast("Gagal update harga live.", true);
-        } finally {
-            btn.classList.remove('loading');
-        }
+            showToast("Harga diupdate!");
+        } catch (error) { showToast("Gagal update harga", true); }
+        finally { btn.classList.remove('loading'); }
     }
 
-    // --- LOGIKA APLIKASI ---
+    // --- TABS & FILTERS ---
     function switchTab(tab) {
         if(tab === 'usdt') {
-            document.getElementById('sectionUsdt').classList.remove('hidden');
-            document.getElementById('sectionBtc').classList.add('hidden');
-            document.getElementById('tabBtnUsdt').className = 'tab-btn active';
-            document.getElementById('tabBtnBtc').className = 'tab-btn';
+            document.getElementById('sectionUsdt').classList.remove('hidden'); document.getElementById('sectionBtc').classList.add('hidden');
+            document.getElementById('tabBtnUsdt').className = 'tab-btn active'; document.getElementById('tabBtnBtc').className = 'tab-btn';
         } else {
-            document.getElementById('sectionUsdt').classList.add('hidden');
-            document.getElementById('sectionBtc').classList.remove('hidden');
-            document.getElementById('tabBtnUsdt').className = 'tab-btn';
-            document.getElementById('tabBtnBtc').className = 'tab-btn active-btc';
+            document.getElementById('sectionUsdt').classList.add('hidden'); document.getElementById('sectionBtc').classList.remove('hidden');
+            document.getElementById('tabBtnUsdt').className = 'tab-btn'; document.getElementById('tabBtnBtc').className = 'tab-btn active-btc';
         }
     }
 
-    function showToast(message, isError = false) {
-        const toast = document.getElementById('toast');
-        toast.className = isError ? 'show error' : 'show';
-        toast.querySelector('span').innerText = message;
-        toast.querySelector('i').className = isError ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-check-circle';
-        setTimeout(() => { toast.className = ''; }, 4000);
+    function populateFilters(data, selectId) {
+        const select = document.getElementById(selectId);
+        const months = new Set();
+        data.forEach(tx => { if(tx.date) months.add(tx.date.substring(0, 7)); }); // Ambil YYYY-MM
+        let html = `<option value="all">Semua Waktu</option>`;
+        [...months].sort().reverse().forEach(m => { html += `<option value="${m}">${m}</option>`; });
+        select.innerHTML = html;
     }
 
-    function calculateUsdt() {
-        const priceEl = document.getElementById('mPrice');
-        const btcEl = document.getElementById('mBtc');
-        const usdtEl = document.getElementById('mUsdt');
-        if (priceEl && btcEl && usdtEl) {
-            const price = parseFloat(priceEl.value) || 0;
-            const btc = parseFloat(btcEl.value) || 0;
-            const result = price * btc;
-            usdtEl.value = result > 0 ? parseFloat(result.toFixed(4)) : 0;
-        }
+    function filterData(data, filterVal) {
+        if(filterVal === 'all') return data;
+        return data.filter(tx => tx.date && tx.date.startsWith(filterVal));
     }
 
-    function cleanNumber(val) {
-        if (!val) return 0;
-        let str = val.toString().trim();
-        if (str.includes(',') && str.includes('.')) str = str.replace(/,/g, ''); 
-        else if (str.includes(',')) {
-            const parts = str.split(',');
-            str = parts[1].length === 3 ? str.replace(/,/g, '') : str.replace(',', '.');
-        } else if (str.includes('.')) {
-            const parts = str.split('.');
-            if (parts[1].length === 3 && parseInt(parts[0]) > 0) str = str.replace(/\./g, '');
-        }
-        return parseFloat(str) || 0;
-    }
-
-    function openModal(type, mode, data = null) {
-        currentAction = { type, mode, data };
-        const formContainer = document.getElementById('modalForm');
-        const title = document.getElementById('modalTitle');
-        
-        let html = '';
-        let valDate = data ? (data.date || '') : new Date().toISOString().slice(0, 16).replace('T', ' ');
-        
-        if (type === 'usdt') {
-            title.innerHTML = `<i class="fa-solid fa-dollar-sign"></i> ${mode === 'edit' ? 'Edit' : (mode === 'manual' ? 'Input Manual' : 'Konfirmasi')} USDT`;
-            html += `
-                <div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${valDate}"></div>
-                <div class="form-group"><label>Merchant:</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : ''}"></div>
-                <div class="form-group"><label>Order ID:</label><input type="text" id="mOrderId" value="${data ? (data.order_id || '') : ''}"></div>
-                <div class="form-group"><label>Nominal (IDR):</label><input type="number" id="mIdr" value="${data ? (data.idr || 0) : 0}"></div>
-                <div class="form-group"><label>Nominal (USDT):</label><input type="number" step="0.0001" id="mUsdt" value="${data ? (data.usdt || 0) : 0}"></div>
-            `;
-        } else {
-            title.innerHTML = `<i class="fa-brands fa-bitcoin"></i> ${mode === 'edit' ? 'Edit' : (mode === 'manual' ? 'Input Manual' : 'Konfirmasi')} BTC`;
-            html += `
-                <div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${valDate}"></div>
-                <div class="form-group"><label>Biaya (Fee):</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : ''}"></div>
-                <div class="form-group"><label>Order ID:</label><input type="text" id="mOrderId" value="${data ? (data.order_id || '') : ''}"></div>
-                <div class="form-group"><label>Harga BTC:</label><input type="number" step="0.1" id="mPrice" value="${data ? (data.price_btc || 0) : 0}" oninput="calculateUsdt()"></div>
-                <div class="form-group"><label>Nominal (USDT):</label><input type="number" step="0.0001" id="mUsdt" value="${data ? (data.usdt_spent || 0) : 0}"></div>
-                <div class="form-group"><label>Jumlah BTC:</label><input type="number" step="0.00000001" id="mBtc" value="${data ? (data.btc || 0) : 0}" oninput="calculateUsdt()"></div>
-            `;
-        }
-
-        formContainer.innerHTML = html;
-        document.getElementById('confirmModal').classList.remove('hidden');
-    }
-
-    function closeModal() {
-        document.getElementById('confirmModal').classList.add('hidden');
-        currentAction = { mode: '', type: '', data: null };
-    }
-
-    async function saveModal() {
-        const date = document.getElementById('mDate').value;
-        const merchant = document.getElementById('mMerchant').value;
-        const orderId = document.getElementById('mOrderId').value;
-        
-        if (!date || !merchant || !orderId) {
-            showToast("Tanggal, Biaya/Merchant, dan Order ID wajib diisi!", true);
-            return;
-        }
-
-        let payload = { date, merchant, order_id: orderId };
-        const table = currentAction.type === 'usdt' ? 'transactions' : 'transactions_btc';
-
-        if (currentAction.type === 'usdt') {
-            payload.idr = parseInt(document.getElementById('mIdr').value) || 0;
-            payload.usdt = parseFloat(document.getElementById('mUsdt').value) || 0;
-        } else {
-            payload.price_btc = parseFloat(document.getElementById('mPrice').value) || 0;
-            payload.usdt_spent = parseFloat(document.getElementById('mUsdt').value) || 0;
-            payload.btc = parseFloat(document.getElementById('mBtc').value) || 0;
-        }
-
-        try {
-            if (currentAction.mode === 'edit') {
-                const { error } = await supabaseClient.from(table).update(payload).eq('id', currentAction.data.id);
-                if (error) throw error;
-                showToast("Data berhasil diupdate!");
-            } else {
-                const { data: existing } = await supabaseClient.from(table).select('id').eq('order_id', orderId);
-                if (existing && existing.length > 0) {
-                    showToast("Order ID sudah ada di database!", true);
-                    return;
-                }
-                const { error } = await supabaseClient.from(table).insert([payload]);
-                if (error) throw error;
-                showToast("Data berhasil disimpan!");
-            }
-            closeModal();
-            fetchData();
-        } catch (error) {
-            console.error(error);
-            showToast("Error DB: " + error.message, true);
-        }
-    }
-
-    document.getElementById('fileInputUsdt').addEventListener('change', function(e) { handleFiles(this.files, 'usdt'); });
-    document.getElementById('fileInputBtc').addEventListener('change', function(e) { handleFiles(this.files, 'btc'); });
-
-    async function handleFiles(files, type) {
-        if (files.length === 0) return;
-        const statusDiv = document.getElementById(type === 'usdt' ? 'statusTextUsdt' : 'statusTextBtc');
-        statusDiv.classList.add('active');
-        const worker = await Tesseract.createWorker('ind+eng');
-
-        for (let i = 0; i < files.length; i++) {
-            statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses gambar ${i + 1}...`;
-            try {
-                const { data: { text } } = await worker.recognize(files[i]);
-                const parsedData = parseTransactionText(text, type);
-                if (parsedData) openModal(type, 'ocr', parsedData);
-                else showToast("Gagal baca gambar " + type.toUpperCase(), true);
-            } catch (error) { 
-                console.error("Error scan:", error); showToast("Sistem Error", true);
-            }
-        }
-        await worker.terminate();
-        statusDiv.classList.remove('active');
-        document.getElementById(type === 'usdt' ? 'fileInputUsdt' : 'fileInputBtc').value = '';
-    }
-
-    function parseTransactionText(text, type) {
-        if (type === 'usdt') {
-            const dateMatch = text.match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/);
-            const date = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 16).replace('T', ' ');
-            let merchant = "Unknown";
-            const knownMerchants = ["Cv_Rpl", "SUIFONG", "CENTURY_PRIME", "FreeNoFee", "SpeedyCashEXC", "ROFIQ_VIIP", "Men_fasttrade", "GuitarHero", "FARZ-EX"];
-            for (let m of knownMerchants) { if (text.includes(m)) { merchant = m; break; } }
-            const idMatch = text.match(/\b(\d{17,20})\b/);
-            const orderId = idMatch ? idMatch[1] : 'ID-' + Date.now();
-            const idrMatches = [...text.matchAll(/(\d{1,3}(?:\.\d{3})+)\s*IDR/g)];
-            let idr = 0;
-            if (idrMatches.length > 0) {
-                const amounts = idrMatches.map(m => parseInt(m[1].replace(/\./g, '')));
-                idr = Math.max(...amounts);
-            }
-            const usdtMatch = text.match(/(\d+,\d+)\s*USDT/);
-            const usdt = usdtMatch ? parseFloat(usdtMatch[1].replace(',', '.')) : 0;
-            if (idr === 0 || usdt === 0) return null;
-            return { date, merchant, order_id: orderId, idr, usdt };
-        } else {
-            const idMatch = text.match(/(?:ID Pesanan)\s*([\d]+)/i);
-            const orderId = idMatch ? idMatch[1] : 'BTC-' + Date.now();
-            const dateMatch = text.match(/(?:Waktu Terpenuhi)\s*(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/i);
-            const date = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 16).replace('T', ' ');
-            let price = 0;
-            const priceMatch = text.match(/(?:Harga yang Terpenuhi)\s*([\d.,]+)/i);
-            if (priceMatch) price = cleanNumber(priceMatch[1]);
-            let btc = 0;
-            const btcMatch = text.match(/(?:Kuantitas yang Diperdagangkan)\s*([\d.,]+)\s*BTC/i);
-            if (btcMatch) btc = cleanNumber(btcMatch[1]);
-            let usdt_spent = 0;
-            const usdtMatch = text.match(/(?:Nilai yang Terpenuhi)\s*([\d.,]+)\s*USDT/i);
-            if (usdtMatch) usdt_spent = cleanNumber(usdtMatch[1]);
-            let fee = "0 BTC";
-            const feeMatch = text.match(/Biaya[\s:=]*([\d.,]+)\s*BTC/i);
-            if (feeMatch) fee = feeMatch[1].trim() + ' BTC';
-            usdt_spent = parseFloat(usdt_spent.toFixed(4));
-            if (btc === 0 || usdt_spent === 0) return null;
-            return { date, merchant: fee, order_id: orderId, price_btc: price, usdt_spent, btc };
-        }
-    }
-
+    // --- FETCH & RENDER DATA ---
     async function fetchData() {
         try {
             const { data } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
-            dataUsdt = data || [];
-            renderTableUsdt(dataUsdt);
+            dataUsdt = data || []; populateFilters(dataUsdt, 'filterUsdt'); renderTableUsdt();
         } catch (e) { console.error(e); }
-
         try {
             const { data } = await supabaseClient.from('transactions_btc').select('*').order('date', { ascending: false });
-            dataBtc = data || [];
-            renderTableBtc(dataBtc);
+            dataBtc = data || []; populateFilters(dataBtc, 'filterBtc'); renderTableBtc();
         } catch (e) { console.error(e); }
-        
         updateDashboardSummary();
     }
 
-    function updateDashboardSummary() {
-        // 1. Hitung USDT
-        let totalIdr = 0, totalUsdt = 0;
-        dataUsdt.forEach(tx => {
-            totalIdr += Number(tx.idr);
-            totalUsdt += Number(tx.usdt);
-        });
-        
-        const avgBuyUsdt = totalUsdt > 0 ? (totalIdr / totalUsdt) : 0;
-        const currentValueUsdt = totalUsdt * livePrice.usdtIdr;
-        const profitLossUsdt = currentValueUsdt - totalIdr;
-        const plPctUsdt = totalIdr > 0 ? (profitLossUsdt / totalIdr) * 100 : 0;
-
-        document.getElementById('totalIdr').innerText = 'Rp ' + totalIdr.toLocaleString('id-ID');
-        document.getElementById('totalUsdt').innerText = totalUsdt.toLocaleString('id-ID', {minimumFractionDigits: 4}) + ' USDT';
-        document.getElementById('avgBuyUsdt').innerText = 'Rp ' + avgBuyUsdt.toLocaleString('id-ID', {maximumFractionDigits: 0});
-        document.getElementById('livePriceUsdt').innerText = 'Rp ' + livePrice.usdtIdr.toLocaleString('id-ID');
-        document.getElementById('currentValueUsdt').innerText = 'Rp ' + currentValueUsdt.toLocaleString('id-ID', {maximumFractionDigits: 0});
-        document.getElementById('profitLossUsdt').innerText = (profitLossUsdt >= 0 ? '+Rp ' : '-Rp ') + Math.abs(profitLossUsdt).toLocaleString('id-ID', {maximumFractionDigits: 0});
-        document.getElementById('profitLossPctUsdt').innerText = (plPctUsdt >= 0 ? '+' : '') + plPctUsdt.toFixed(2) + '%';
-        
-        const cardPlUsdt = document.getElementById('cardPlUsdt');
-        if (profitLossUsdt < 0) cardPlUsdt.classList.add('negative');
-        else cardPlUsdt.classList.remove('negative');
-
-        // 2. Hitung BTC
-        let totalUsdtSpent = 0, totalBtc = 0;
-        dataBtc.forEach(tx => {
-            totalUsdtSpent += Number(tx.usdt_spent);
-            totalBtc += Number(tx.btc);
-        });
-
-        const avgBuyBtc = totalBtc > 0 ? (totalUsdtSpent / totalBtc) : 0;
-        const currentValueBtc = totalBtc * livePrice.btcUsdt;
-        const profitLossBtc = currentValueBtc - totalUsdtSpent;
-        const plPctBtc = totalUsdtSpent > 0 ? (profitLossBtc / totalUsdtSpent) * 100 : 0;
-
-        document.getElementById('totalUsdtSpent').innerText = totalUsdtSpent.toLocaleString('id-ID', {minimumFractionDigits: 4}) + ' USDT';
-        document.getElementById('totalBtc').innerText = totalBtc.toLocaleString('id-ID', {minimumFractionDigits: 8}) + ' BTC';
-        document.getElementById('avgBuyBtc').innerText = avgBuyBtc.toLocaleString('id-ID', {maximumFractionDigits: 2}) + ' USDT';
-        document.getElementById('livePriceBtc').innerText = livePrice.btcUsdt.toLocaleString('id-ID', {maximumFractionDigits: 2}) + ' USDT';
-        document.getElementById('currentValueBtc').innerText = currentValueBtc.toLocaleString('id-ID', {minimumFractionDigits: 4, maximumFractionDigits: 4}) + ' USDT';
-        document.getElementById('profitLossBtc').innerText = (profitLossBtc >= 0 ? '+' : '-') + Math.abs(profitLossBtc).toLocaleString('id-ID', {minimumFractionDigits: 4, maximumFractionDigits: 4}) + ' USDT';
-        document.getElementById('profitLossPctBtc').innerText = (plPctBtc >= 0 ? '+' : '') + plPctBtc.toFixed(2) + '%';
-
-        const cardPlBtc = document.getElementById('cardPlBtc');
-        if (profitLossBtc < 0) cardPlBtc.classList.add('negative');
-        else cardPlBtc.classList.remove('negative');
-    }
-
-    function renderTableUsdt(transactions) {
+    function renderTableUsdt() {
+        const filter = document.getElementById('filterUsdt').value;
+        const filtered = filterData(dataUsdt, filter);
         const tbody = document.getElementById('tableBodyUsdt');
-        tbody.innerHTML = '';
-        if (transactions.length === 0) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data.</td></tr>`;
-        
-        transactions.forEach(tx => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
+        tbody.innerHTML = filtered.length === 0 ? `<tr><td colspan="6" style="text-align:center;">Tidak ada data.</td></tr>` : '';
+        filtered.forEach(tx => {
+            tbody.innerHTML += `<tr>
                 <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
                 <td><strong style="color: #e2e8f0;">${tx.merchant}</strong></td>
                 <td style="font-family: monospace; color: #64748b; font-size: 13px;">${tx.order_id}</td>
@@ -592,44 +353,191 @@
                 <td><div class="action-btns">
                     <button class="btn-edit" onclick="openModal('usdt', 'edit', ${JSON.stringify(tx).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions')"><i class="fa-solid fa-xmark"></i></button>
-                </div></td>`;
-            tbody.appendChild(tr);
+                </div></td></tr>`;
         });
     }
 
-    function renderTableBtc(transactions) {
+    function renderTableBtc() {
+        const filter = document.getElementById('filterBtc').value;
+        const filtered = filterData(dataBtc, filter);
         const tbody = document.getElementById('tableBodyBtc');
-        tbody.innerHTML = '';
-        if (transactions.length === 0) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Belum ada data.</td></tr>`;
-        
-        transactions.forEach(tx => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
+        tbody.innerHTML = filtered.length === 0 ? `<tr><td colspan="7" style="text-align:center;">Tidak ada data.</td></tr>` : '';
+        filtered.forEach(tx => {
+            tbody.innerHTML += `<tr>
                 <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
                 <td class="val-fee">${tx.merchant}</td> 
                 <td style="font-family: monospace; color: #64748b; font-size: 13px;">${tx.order_id}</td>
                 <td class="text-right val-usdt">${Number(tx.price_btc || 0).toLocaleString('id-ID')}</td>
-                <td class="text-right val-usdt">${Number(tx.usdt_spent).toLocaleString('id-ID', {minimumFractionDigits: 4})} USDT</td>
+                <td class="text-right val-usdt">${Number(tx.usdt_spent).toLocaleString('id-ID', {minimumFractionDigits: 4})}</td>
                 <td class="text-right val-btc">${Number(tx.btc).toLocaleString('id-ID', {minimumFractionDigits: 8})}</td>
                 <td><div class="action-btns">
                     <button class="btn-edit" onclick="openModal('btc', 'edit', ${JSON.stringify(tx).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions_btc')"><i class="fa-solid fa-xmark"></i></button>
-                </div></td>`;
-            tbody.appendChild(tr);
+                </div></td></tr>`;
         });
     }
 
-    async function deleteTx(id, table) {
-        if(confirm("Hapus transaksi ini?")) {
-            await supabaseClient.from(table).delete().eq('id', id);
-            showToast("Dihapus"); fetchData();
+    // --- EXPORT CSV ---
+    function exportCSV(type) {
+        const filter = document.getElementById(type === 'usdt' ? 'filterUsdt' : 'filterBtc').value;
+        const rawData = type === 'usdt' ? dataUsdt : dataBtc;
+        const filtered = filterData(rawData, filter);
+        
+        if(filtered.length === 0) return showToast("Tidak ada data untuk diexport", true);
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        if(type === 'usdt') {
+            csvContent += "Tanggal,Merchant,Order ID,Nominal IDR,USDT\n";
+            filtered.forEach(tx => { csvContent += `"${tx.date}","${tx.merchant}","${tx.order_id}",${tx.idr},${tx.usdt}\n`; });
+        } else {
+            csvContent += "Tanggal,Biaya,Order ID,Harga BTC,Modal USDT,Jumlah BTC\n";
+            filtered.forEach(tx => { csvContent += `"${tx.date}","${tx.merchant}","${tx.order_id}",${tx.price_btc},${tx.usdt_spent},${tx.btc}\n`; });
         }
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `riwayat_${type}_${filter}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("Berhasil export CSV!");
     }
 
-    async function clearAllData(table) {
-        if(confirm("Hapus SEMUA data di tabel ini?")) {
-            await supabaseClient.from(table).delete().gt('id', 0);
-            showToast("Semua data dibersihkan"); fetchData();
+    // --- SUMMARY CALCULATION ---
+    function updateDashboardSummary() {
+        // USDT
+        let totalIdr = 0, totalUsdt = 0;
+        dataUsdt.forEach(tx => { totalIdr += Number(tx.idr); totalUsdt += Number(tx.usdt); });
+        const avgBuyUsdt = totalUsdt > 0 ? (totalIdr / totalUsdt) : 0;
+        const currentValueUsdt = totalUsdt * livePrice.usdtIdr;
+        const profitLossUsdt = currentValueUsdt - totalIdr;
+        const plPctUsdt = totalIdr > 0 ? (profitLossUsdt / totalIdr) * 100 : 0;
+
+        document.getElementById('totalIdr').innerText = 'Rp ' + totalIdr.toLocaleString('id-ID');
+        document.getElementById('totalUsdt').innerText = totalUsdt.toLocaleString('id-ID', {minimumFractionDigits: 4});
+        document.getElementById('totalTxUsdt').innerText = dataUsdt.length;
+        document.getElementById('avgBuyUsdt').innerText = 'Rp ' + avgBuyUsdt.toLocaleString('id-ID', {maximumFractionDigits: 0});
+        document.getElementById('livePriceUsdt').innerText = 'Rp ' + livePrice.usdtIdr.toLocaleString('id-ID');
+        document.getElementById('profitLossUsdt').innerText = (profitLossUsdt >= 0 ? '+Rp ' : '-Rp ') + Math.abs(profitLossUsdt).toLocaleString('id-ID', {maximumFractionDigits: 0});
+        document.getElementById('profitLossPctUsdt').innerText = (plPctUsdt >= 0 ? '+' : '') + plPctUsdt.toFixed(2) + '%';
+        document.getElementById('cardPlUsdt').className = profitLossUsdt < 0 ? 'card pl negative' : 'card pl';
+        
+        // Target USDT
+        const pctUsdt = goals.usdt > 0 ? Math.min((totalUsdt / goals.usdt) * 100, 100) : 0;
+        document.getElementById('goalProgressUsdt').style.width = pctUsdt + '%';
+        document.getElementById('goalTextUsdt').innerText = `${totalUsdt.toLocaleString('id-ID', {maximumFractionDigits:2})} / ${goals.usdt.toLocaleString('id-ID')} USDT (${pctUsdt.toFixed(1)}%)`;
+
+        // BTC
+        let totalUsdtSpent = 0, totalBtc = 0;
+        dataBtc.forEach(tx => { totalUsdtSpent += Number(tx.usdt_spent); totalBtc += Number(tx.btc); });
+        const avgBuyBtc = totalBtc > 0 ? (totalUsdtSpent / totalBtc) : 0;
+        const currentValueBtc = totalBtc * livePrice.btcUsdt;
+        const profitLossBtc = currentValueBtc - totalUsdtSpent;
+        const plPctBtc = totalUsdtSpent > 0 ? (profitLossBtc / totalUsdtSpent) * 100 : 0;
+
+        document.getElementById('totalUsdtSpent').innerText = totalUsdtSpent.toLocaleString('id-ID', {minimumFractionDigits: 2});
+        document.getElementById('totalBtc').innerText = totalBtc.toLocaleString('id-ID', {minimumFractionDigits: 8});
+        document.getElementById('totalTxBtc').innerText = dataBtc.length;
+        document.getElementById('avgBuyBtc').innerText = avgBuyBtc.toLocaleString('id-ID', {maximumFractionDigits: 2});
+        document.getElementById('livePriceBtc').innerText = livePrice.btcUsdt.toLocaleString('id-ID', {maximumFractionDigits: 2});
+        document.getElementById('profitLossBtc').innerText = (profitLossBtc >= 0 ? '+' : '-') + Math.abs(profitLossBtc).toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('profitLossPctBtc').innerText = (plPctBtc >= 0 ? '+' : '') + plPctBtc.toFixed(2) + '%';
+        document.getElementById('cardPlBtc').className = profitLossBtc < 0 ? 'card pl negative' : 'card pl';
+
+        // Target BTC
+        const pctBtc = goals.btc > 0 ? Math.min((totalBtc / goals.btc) * 100, 100) : 0;
+        document.getElementById('goalProgressBtc').style.width = pctBtc + '%';
+        document.getElementById('goalTextBtc').innerText = `${totalBtc.toLocaleString('id-ID', {maximumFractionDigits:8})} / ${goals.btc} BTC (${pctBtc.toFixed(1)}%)`;
+    }
+
+    // --- MODAL & CRUD --- (Sama seperti sebelumnya, disingkat agar muat)
+    function openModal(type, mode, data = null) {
+        currentAction = { type, mode, data };
+        const formContainer = document.getElementById('modalForm');
+        const title = document.getElementById('modalTitle');
+        let html = ''; let valDate = data ? (data.date || '') : new Date().toISOString().slice(0, 16).replace('T', ' ');
+        
+        if (type === 'usdt') {
+            title.innerHTML = `<i class="fa-solid fa-dollar-sign"></i> ${mode === 'edit' ? 'Edit' : (mode === 'manual' ? 'Input Manual' : 'Konfirmasi')} USDT`;
+            html += `<div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${valDate}"></div>
+                <div class="form-group"><label>Merchant:</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : ''}"></div>
+                <div class="form-group"><label>Order ID:</label><input type="text" id="mOrderId" value="${data ? (data.order_id || '') : ''}"></div>
+                <div class="form-group"><label>Nominal (IDR):</label><input type="number" id="mIdr" value="${data ? (data.idr || 0) : 0}"></div>
+                <div class="form-group"><label>Nominal (USDT):</label><input type="number" step="0.0001" id="mUsdt" value="${data ? (data.usdt || 0) : 0}"></div>`;
+        } else {
+            title.innerHTML = `<i class="fa-brands fa-bitcoin"></i> ${mode === 'edit' ? 'Edit' : (mode === 'manual' ? 'Input Manual' : 'Konfirmasi')} BTC`;
+            html += `<div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${valDate}"></div>
+                <div class="form-group"><label>Biaya (Fee):</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : ''}"></div>
+                <div class="form-group"><label>Order ID:</label><input type="text" id="mOrderId" value="${data ? (data.order_id || '') : ''}"></div>
+                <div class="form-group"><label>Harga BTC:</label><input type="number" step="0.1" id="mPrice" value="${data ? (data.price_btc || 0) : 0}" oninput="calculateUsdt()"></div>
+                <div class="form-group"><label>Nominal (USDT):</label><input type="number" step="0.0001" id="mUsdt" value="${data ? (data.usdt_spent || 0) : 0}"></div>
+                <div class="form-group"><label>Jumlah BTC:</label><input type="number" step="0.00000001" id="mBtc" value="${data ? (data.btc || 0) : 0}" oninput="calculateUsdt()"></div>`;
+        }
+        formContainer.innerHTML = html; document.getElementById('confirmModal').classList.remove('hidden');
+    }
+    
+    function closeModal() { document.getElementById('confirmModal').classList.add('hidden'); currentAction = { mode: '', type: '', data: null }; }
+    function calculateUsdt() { const p=parseFloat(document.getElementById('mPrice').value)||0, b=parseFloat(document.getElementById('mBtc').value)||0, r=p*b; document.getElementById('mUsdt').value = r>0?parseFloat(r.toFixed(4)):0; }
+    
+    async function saveModal() {
+        const date = document.getElementById('mDate').value, merchant = document.getElementById('mMerchant').value, orderId = document.getElementById('mOrderId').value;
+        if (!date || !merchant || !orderId) return showToast("Semua field wajib diisi!", true);
+        let payload = { date, merchant, order_id: orderId };
+        const table = currentAction.type === 'usdt' ? 'transactions' : 'transactions_btc';
+        if (currentAction.type === 'usdt') { payload.idr = parseInt(document.getElementById('mIdr').value) || 0; payload.usdt = parseFloat(document.getElementById('mUsdt').value) || 0; } 
+        else { payload.price_btc = parseFloat(document.getElementById('mPrice').value) || 0; payload.usdt_spent = parseFloat(document.getElementById('mUsdt').value) || 0; payload.btc = parseFloat(document.getElementById('mBtc').value) || 0; }
+        try {
+            if (currentAction.mode === 'edit') { await supabaseClient.from(table).update(payload).eq('id', currentAction.data.id); showToast("Diupdate!"); } 
+            else {
+                const { data: ex } = await supabaseClient.from(table).select('id').eq('order_id', orderId);
+                if (ex && ex.length > 0) return showToast("Order ID sudah ada!", true);
+                await supabaseClient.from(table).insert([payload]); showToast("Disimpan!");
+            }
+            closeModal(); fetchData();
+        } catch (error) { showToast("Error DB: " + error.message, true); }
+    }
+
+    async function deleteTx(id, table) { if(confirm("Hapus transaksi ini?")) { await supabaseClient.from(table).delete().eq('id', id); showToast("Dihapus"); fetchData(); } }
+    async function clearAllData(table) { if(confirm("Hapus SEMUA data di tabel ini?")) { await supabaseClient.from(table).delete().gt('id', 0); showToast("Dibersihkan"); fetchData(); } }
+    function showToast(m, isErr=false) { const t=document.getElementById('toast'); t.className=isErr?'show error':'show'; t.querySelector('span').innerText=m; setTimeout(()=>t.className='',3000); }
+
+    // --- UPLOAD & OCR ---
+    document.getElementById('fileInputUsdt').addEventListener('change', function(e) { handleFiles(this.files, 'usdt'); });
+    document.getElementById('fileInputBtc').addEventListener('change', function(e) { handleFiles(this.files, 'btc'); });
+
+    async function handleFiles(files, type) {
+        if (files.length === 0) return; const statusDiv = document.getElementById(type === 'usdt' ? 'statusTextUsdt' : 'statusTextBtc');
+        statusDiv.classList.add('active'); const worker = await Tesseract.createWorker('ind+eng');
+        for (let i = 0; i < files.length; i++) {
+            statusDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Proses ${i + 1}...`;
+            try {
+                const { data: { text } } = await worker.recognize(files[i]); const parsedData = parseTransactionText(text, type);
+                if (parsedData) openModal(type, 'ocr', parsedData); else showToast("Gagal baca " + type, true);
+            } catch (error) { console.error(error); }
+        }
+        await worker.terminate(); statusDiv.classList.remove('active'); document.getElementById(type === 'usdt' ? 'fileInputUsdt' : 'fileInputBtc').value = '';
+    }
+
+    function cleanNumber(val) { if (!val) return 0; let str = val.toString().trim(); if (str.includes(',') && str.includes('.')) str = str.replace(/,/g, ''); else if (str.includes(',')) { const parts = str.split(','); str = parts[1].length === 3 ? str.replace(/,/g, '') : str.replace(',', '.'); } else if (str.includes('.')) { const parts = str.split('.'); if (parts[1].length === 3 && parseInt(parts[0]) > 0) str = str.replace(/\./g, ''); } return parseFloat(str) || 0; }
+
+    function parseTransactionText(text, type) {
+        if (type === 'usdt') {
+            const dateMatch = text.match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/); const date = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 16).replace('T', ' ');
+            let merchant = "Unknown"; const knownMerchants = ["Cv_Rpl", "SUIFONG", "CENTURY_PRIME", "FreeNoFee", "SpeedyCashEXC", "ROFIQ_VIIP", "Men_fasttrade", "GuitarHero", "FARZ-EX"]; for (let m of knownMerchants) { if (text.includes(m)) { merchant = m; break; } }
+            const idMatch = text.match(/\b(\d{17,20})\b/); const orderId = idMatch ? idMatch[1] : 'ID-' + Date.now();
+            const idrMatches = [...text.matchAll(/(\d{1,3}(?:\.\d{3})+)\s*IDR/g)]; let idr = 0; if (idrMatches.length > 0) idr = Math.max(...idrMatches.map(m => parseInt(m[1].replace(/\./g, ''))));
+            const usdtMatch = text.match(/(\d+,\d+)\s*USDT/); const usdt = usdtMatch ? parseFloat(usdtMatch[1].replace(',', '.')) : 0;
+            if (idr === 0 || usdt === 0) return null; return { date, merchant, order_id: orderId, idr, usdt };
+        } else {
+            const idMatch = text.match(/(?:ID Pesanan)\s*([\d]+)/i); const orderId = idMatch ? idMatch[1] : 'BTC-' + Date.now();
+            const dateMatch = text.match(/(?:Waktu Terpenuhi)\s*(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/i); const date = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 16).replace('T', ' ');
+            let price = 0; const priceMatch = text.match(/(?:Harga yang Terpenuhi)\s*([\d.,]+)/i); if (priceMatch) price = cleanNumber(priceMatch[1]);
+            let btc = 0; const btcMatch = text.match(/(?:Kuantitas yang Diperdagangkan)\s*([\d.,]+)\s*BTC/i); if (btcMatch) btc = cleanNumber(btcMatch[1]);
+            let usdt_spent = 0; const usdtMatch = text.match(/(?:Nilai yang Terpenuhi)\s*([\d.,]+)\s*USDT/i); if (usdtMatch) usdt_spent = cleanNumber(usdtMatch[1]);
+            let fee = "0 BTC"; const feeMatch = text.match(/Biaya[\s:=]*([\d.,]+)\s*BTC/i); if (feeMatch) fee = feeMatch[1].trim() + ' BTC';
+            usdt_spent = parseFloat(usdt_spent.toFixed(4));
+            if (btc === 0 || usdt_spent === 0) return null; return { date, merchant: fee, order_id: orderId, price_btc: price, usdt_spent, btc };
         }
     }
 </script>
