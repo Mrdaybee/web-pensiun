@@ -34,8 +34,8 @@
         .tab-btn.active { background: var(--card-bg); color: var(--primary); border: 1px solid var(--border); }
         .tab-btn.active-btc { background: var(--card-bg); color: #f97316; border: 1px solid var(--border); }
         
-        /* CARDS */
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        /* CARDS (7 Item per tab) */
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .card { background: var(--card-bg); padding: 20px; border-radius: 16px; border: 1px solid var(--border); position: relative; overflow: hidden; transition: transform 0.3s ease; }
         .card:hover { transform: translateY(-3px); }
         .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
@@ -152,6 +152,7 @@
             <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTxUsdt">0</div></div>
             <div class="card usdt"><div class="card-title"><i class="fa-solid fa-tags"></i> Rata-rata Beli</div><div class="card-value" id="avgBuyUsdt">Rp 0</div></div>
             <div class="card idr"><div class="card-title"><i class="fa-solid fa-chart-line"></i> Harga Live</div><div class="card-value" id="livePriceUsdt">Rp 0</div></div>
+            <div class="card idr"><div class="card-title"><i class="fa-solid fa-vault"></i> Nilai Saat Ini</div><div class="card-value" id="currentValueUsdt">Rp 0</div></div>
             <div class="card pl" id="cardPlUsdt"><div class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Profit / Loss</div><div class="card-value" id="profitLossUsdt">Rp 0</div><div class="card-sub" id="profitLossPctUsdt">0%</div></div>
         </div>
         
@@ -187,6 +188,7 @@
             <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTxBtc">0</div></div>
             <div class="card btc"><div class="card-title"><i class="fa-solid fa-tags"></i> Rata-rata Beli</div><div class="card-value" id="avgBuyBtc">0 USDT</div></div>
             <div class="card btc"><div class="card-title"><i class="fa-solid fa-chart-line"></i> Harga Live</div><div class="card-value" id="livePriceBtc">0 USDT</div></div>
+            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-vault"></i> Nilai Saat Ini</div><div class="card-value" id="currentValueBtc">0 USDT</div></div>
             <div class="card pl" id="cardPlBtc"><div class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Profit / Loss</div><div class="card-value" id="profitLossBtc">0 USDT</div><div class="card-sub" id="profitLossPctBtc">0%</div></div>
         </div>
 
@@ -235,12 +237,8 @@
     let livePrice = { usdtIdr: 0, btcUsdt: 0 };
     let goals = { usdt: 0, btc: 0 };
 
-    // PWA Service Worker
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error', err));
-    }
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error', err)); }
 
-    // --- LOGIN ---
     async function handleLogin() {
         let username = document.getElementById('loginUser').value.trim();
         const password = document.getElementById('loginPass').value;
@@ -265,7 +263,6 @@
     }
     document.addEventListener('DOMContentLoaded', checkSession);
 
-    // --- INIT & GOALS ---
     function initApp() {
         loadGoals();
         fetchData();
@@ -286,7 +283,6 @@
         showToast("Target disimpan!");
     }
 
-    // --- LIVE PRICE ---
     async function fetchLivePrices() {
         const btn = document.getElementById('btnRefresh'); btn.classList.add('loading');
         try {
@@ -300,7 +296,6 @@
         finally { btn.classList.remove('loading'); }
     }
 
-    // --- TABS & FILTERS ---
     function switchTab(tab) {
         if(tab === 'usdt') {
             document.getElementById('sectionUsdt').classList.remove('hidden'); document.getElementById('sectionBtc').classList.add('hidden');
@@ -314,7 +309,7 @@
     function populateFilters(data, selectId) {
         const select = document.getElementById(selectId);
         const months = new Set();
-        data.forEach(tx => { if(tx.date) months.add(tx.date.substring(0, 7)); }); // Ambil YYYY-MM
+        data.forEach(tx => { if(tx.date) months.add(tx.date.substring(0, 7)); });
         let html = `<option value="all">Semua Waktu</option>`;
         [...months].sort().reverse().forEach(m => { html += `<option value="${m}">${m}</option>`; });
         select.innerHTML = html;
@@ -325,7 +320,6 @@
         return data.filter(tx => tx.date && tx.date.startsWith(filterVal));
     }
 
-    // --- FETCH & RENDER DATA ---
     async function fetchData() {
         try {
             const { data } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
@@ -377,14 +371,11 @@
         });
     }
 
-    // --- EXPORT CSV ---
     function exportCSV(type) {
         const filter = document.getElementById(type === 'usdt' ? 'filterUsdt' : 'filterBtc').value;
         const rawData = type === 'usdt' ? dataUsdt : dataBtc;
         const filtered = filterData(rawData, filter);
-        
         if(filtered.length === 0) return showToast("Tidak ada data untuk diexport", true);
-
         let csvContent = "data:text/csv;charset=utf-8,";
         if(type === 'usdt') {
             csvContent += "Tanggal,Merchant,Order ID,Nominal IDR,USDT\n";
@@ -393,18 +384,14 @@
             csvContent += "Tanggal,Biaya,Order ID,Harga BTC,Modal USDT,Jumlah BTC\n";
             filtered.forEach(tx => { csvContent += `"${tx.date}","${tx.merchant}","${tx.order_id}",${tx.price_btc},${tx.usdt_spent},${tx.btc}\n`; });
         }
-
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
         link.setAttribute("download", `riwayat_${type}_${filter}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
         showToast("Berhasil export CSV!");
     }
 
-    // --- SUMMARY CALCULATION ---
     function updateDashboardSummary() {
         // USDT
         let totalIdr = 0, totalUsdt = 0;
@@ -419,6 +406,7 @@
         document.getElementById('totalTxUsdt').innerText = dataUsdt.length;
         document.getElementById('avgBuyUsdt').innerText = 'Rp ' + avgBuyUsdt.toLocaleString('id-ID', {maximumFractionDigits: 0});
         document.getElementById('livePriceUsdt').innerText = 'Rp ' + livePrice.usdtIdr.toLocaleString('id-ID');
+        document.getElementById('currentValueUsdt').innerText = 'Rp ' + currentValueUsdt.toLocaleString('id-ID', {maximumFractionDigits: 0});
         document.getElementById('profitLossUsdt').innerText = (profitLossUsdt >= 0 ? '+Rp ' : '-Rp ') + Math.abs(profitLossUsdt).toLocaleString('id-ID', {maximumFractionDigits: 0});
         document.getElementById('profitLossPctUsdt').innerText = (plPctUsdt >= 0 ? '+' : '') + plPctUsdt.toFixed(2) + '%';
         document.getElementById('cardPlUsdt').className = profitLossUsdt < 0 ? 'card pl negative' : 'card pl';
@@ -441,7 +429,8 @@
         document.getElementById('totalTxBtc').innerText = dataBtc.length;
         document.getElementById('avgBuyBtc').innerText = avgBuyBtc.toLocaleString('id-ID', {maximumFractionDigits: 2});
         document.getElementById('livePriceBtc').innerText = livePrice.btcUsdt.toLocaleString('id-ID', {maximumFractionDigits: 2});
-        document.getElementById('profitLossBtc').innerText = (profitLossBtc >= 0 ? '+' : '-') + Math.abs(profitLossBtc).toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('currentValueBtc').innerText = currentValueBtc.toLocaleString('id-ID', {minimumFractionDigits: 4, maximumFractionDigits: 4});
+        document.getElementById('profitLossBtc').innerText = (profitLossBtc >= 0 ? '+' : '-') + Math.abs(profitLossBtc).toLocaleString('id-ID', {minimumFractionDigits: 4, maximumFractionDigits: 4});
         document.getElementById('profitLossPctBtc').innerText = (plPctBtc >= 0 ? '+' : '') + plPctBtc.toFixed(2) + '%';
         document.getElementById('cardPlBtc').className = profitLossBtc < 0 ? 'card pl negative' : 'card pl';
 
@@ -451,7 +440,7 @@
         document.getElementById('goalTextBtc').innerText = `${totalBtc.toLocaleString('id-ID', {maximumFractionDigits:8})} / ${goals.btc} BTC (${pctBtc.toFixed(1)}%)`;
     }
 
-    // --- MODAL & CRUD --- (Sama seperti sebelumnya, disingkat agar muat)
+    // --- MODAL & CRUD ---
     function openModal(type, mode, data = null) {
         currentAction = { type, mode, data };
         const formContainer = document.getElementById('modalForm');
