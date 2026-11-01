@@ -20,6 +20,9 @@
         .header-left h1 { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
         .header-left p { color: var(--text-muted); margin-top: 5px; font-size: 14px; }
         .header-actions { display: flex; gap: 10px; }
+        
+        .btn-login { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-login:hover { background: #2563eb; }
         .btn-logout { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
         .btn-logout:hover { background: var(--danger); color: white; }
         .btn-refresh { background: rgba(59, 130, 246, 0.1); color: var(--primary); border: 1px solid rgba(59, 130, 246, 0.2); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
@@ -34,7 +37,7 @@
         .tab-btn.active { background: var(--card-bg); color: var(--primary); border: 1px solid var(--border); }
         .tab-btn.active-btc { background: var(--card-bg); color: #f97316; border: 1px solid var(--border); }
         
-        /* CARDS (7 Item per tab) */
+        /* CARDS */
         .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .card { background: var(--card-bg); padding: 20px; border-radius: 16px; border: 1px solid var(--border); position: relative; overflow: hidden; transition: transform 0.3s ease; }
         .card:hover { transform: translateY(-3px); }
@@ -101,7 +104,7 @@
         .status-text.active { display: block; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* MODAL, TOAST, LOGIN */
+        /* MODAL, TOAST */
         #toast { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; padding: 15px 25px; border-radius: 10px; z-index: 1000; transform: translateY(100px); opacity: 0; transition: 0.3s; }
         #toast.show { transform: translateY(0); opacity: 1; }
         #toast.error { background: var(--danger); }
@@ -115,27 +118,17 @@
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
         .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; cursor: pointer; }
         .btn-save { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-        #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 5000; }
-        .login-box { background: var(--card-bg); padding: 40px; border-radius: 16px; border: 1px solid var(--border); width: 90%; max-width: 400px; text-align: center; }
-        .btn-login { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 10px; }
     </style>
 </head>
 <body>
-<div id="loginScreen">
-    <div class="login-box">
-        <h1><i class="fa-solid fa-lock"></i> Login Admin</h1>
-        <div class="form-group" style="text-align:left"><label>Username</label><input type="text" id="loginUser"></div>
-        <div class="form-group" style="text-align:left"><label>Password</label><input type="password" id="loginPass"></div>
-        <button class="btn-login" onclick="handleLogin()">Masuk</button>
-    </div>
-</div>
 
-<div class="container hidden" id="mainApp">
+<div class="container" id="mainApp">
     <div class="header">
         <div class="header-left"><h1><i class="fa-solid fa-chart-pie" style="color: var(--primary);"></i> Aset Pensiun</h1><p>Portofolio & Analisis Keuntungan.</p></div>
         <div class="header-actions">
+            <button class="btn-login" id="btnLogin" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Login Admin</button>
             <button class="btn-refresh" id="btnRefresh" onclick="fetchLivePrices()"><i class="fa-solid fa-rotate-right"></i> Refresh Harga</button>
-            <button class="btn-logout" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            <button class="btn-logout hidden" id="btnLogout" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
         </div>
     </div>
 
@@ -159,10 +152,10 @@
         <div class="goal-box">
             <div class="goal-header"><h3><i class="fa-solid fa-bullseye"></i> Target USDT</h3><span id="goalTextUsdt">0 / 0 USDT (0%)</span></div>
             <div class="progress-bar"><div class="progress-fill" id="goalProgressUsdt"></div></div>
-            <div class="goal-inputs"><input type="number" id="inputGoalUsdt" placeholder="Target USDT"><button onclick="saveGoal('usdt')">Set Target</button></div>
+            <div class="goal-inputs auth-only hidden"><input type="number" id="inputGoalUsdt" placeholder="Target USDT"><button onclick="saveGoal('usdt')">Set Target</button></div>
         </div>
 
-        <div class="action-row">
+        <div class="action-row auth-only hidden">
             <div class="upload-section" onclick="document.getElementById('fileInputUsdt').click()"><i class="fa-solid fa-cloud-arrow-up upload-icon"></i><h3>Upload Screenshot USDT</h3><input type="file" id="fileInputUsdt" accept="image/*" multiple><div class="status-text" id="statusTextUsdt"></div></div>
             <button class="btn-manual" onclick="openModal('usdt', 'manual')"><i class="fa-solid fa-plus"></i> Tambah Manual</button>
         </div>
@@ -171,12 +164,12 @@
             <h2><i class="fa-solid fa-list-ul"></i> Riwayat USDT</h2>
             <div class="table-actions">
                 <select class="filter-select" id="filterUsdt" onchange="renderTableUsdt()"><option value="all">Semua Waktu</option></select>
-                <button class="btn-export" onclick="exportCSV('usdt')"><i class="fa-solid fa-file-csv"></i> Export</button>
-                <button class="btn-clear" onclick="clearAllData('transactions')"><i class="fa-solid fa-trash"></i> Hapus</button>
+                <button class="btn-export auth-only hidden" onclick="exportCSV('usdt')"><i class="fa-solid fa-file-csv"></i> Export</button>
+                <button class="btn-clear auth-only hidden" onclick="clearAllData('transactions')"><i class="fa-solid fa-trash"></i> Hapus</button>
             </div>
         </div>
         <div class="table-container">
-            <table><thead><tr><th>Tanggal</th><th>Merchant</th><th>Order ID</th><th class="text-right">Nominal (IDR)</th><th class="text-right">USDT</th><th style="text-align: center;">Aksi</th></tr></thead><tbody id="tableBodyUsdt"></tbody></table>
+            <table><thead><tr><th>Tanggal</th><th>Merchant</th><th>Order ID</th><th class="text-right">Nominal (IDR)</th><th class="text-right">USDT</th><th class="auth-only hidden" style="text-align: center;">Aksi</th></tr></thead><tbody id="tableBodyUsdt"></tbody></table>
         </div>
     </div>
 
@@ -195,10 +188,10 @@
         <div class="goal-box">
             <div class="goal-header"><h3><i class="fa-solid fa-bullseye"></i> Target BTC</h3><span id="goalTextBtc">0 / 0 BTC (0%)</span></div>
             <div class="progress-bar"><div class="progress-fill btc-goal" id="goalProgressBtc"></div></div>
-            <div class="goal-inputs"><input type="number" step="0.00000001" id="inputGoalBtc" placeholder="Target BTC"><button onclick="saveGoal('btc')">Set Target</button></div>
+            <div class="goal-inputs auth-only hidden"><input type="number" step="0.00000001" id="inputGoalBtc" placeholder="Target BTC"><button onclick="saveGoal('btc')">Set Target</button></div>
         </div>
 
-        <div class="action-row">
+        <div class="action-row auth-only hidden">
             <div class="upload-section" onclick="document.getElementById('fileInputBtc').click()"><i class="fa-solid fa-cloud-arrow-up upload-icon" style="color: #f97316;"></i><h3>Upload Screenshot BTC</h3><input type="file" id="fileInputBtc" accept="image/*" multiple><div class="status-text" id="statusTextBtc"></div></div>
             <button class="btn-manual" onclick="openModal('btc', 'manual')" style="color: #f97316;"><i class="fa-solid fa-plus"></i> Tambah Manual</button>
         </div>
@@ -207,16 +200,30 @@
             <h2><i class="fa-solid fa-list-ul"></i> Riwayat BTC</h2>
             <div class="table-actions">
                 <select class="filter-select" id="filterBtc" onchange="renderTableBtc()"><option value="all">Semua Waktu</option></select>
-                <button class="btn-export" onclick="exportCSV('btc')"><i class="fa-solid fa-file-csv"></i> Export</button>
-                <button class="btn-clear" onclick="clearAllData('transactions_btc')"><i class="fa-solid fa-trash"></i> Hapus</button>
+                <button class="btn-export auth-only hidden" onclick="exportCSV('btc')"><i class="fa-solid fa-file-csv"></i> Export</button>
+                <button class="btn-clear auth-only hidden" onclick="clearAllData('transactions_btc')"><i class="fa-solid fa-trash"></i> Hapus</button>
             </div>
         </div>
         <div class="table-container">
-            <table><thead><tr><th>Tanggal</th><th>Biaya</th><th>Order ID</th><th class="text-right">Harga</th><th class="text-right">Nominal (USDT)</th><th class="text-right">BTC</th><th style="text-align: center;">Aksi</th></tr></thead><tbody id="tableBodyBtc"></tbody></table>
+            <table><thead><tr><th>Tanggal</th><th>Biaya</th><th>Order ID</th><th class="text-right">Harga</th><th class="text-right">Nominal (USDT)</th><th class="text-right">BTC</th><th class="auth-only hidden" style="text-align: center;">Aksi</th></tr></thead><tbody id="tableBodyBtc"></tbody></table>
         </div>
     </div>
 </div>
 
+<!-- MODAL LOGIN -->
+<div id="loginModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2><i class="fa-solid fa-lock"></i> Login Admin</h2>
+        <div class="form-group"><label>Username</label><input type="text" id="loginUser" placeholder="mrbee"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="loginPass" placeholder="********"></div>
+        <div class="modal-actions">
+            <button onclick="closeLoginModal()" class="btn-cancel">Batal</button>
+            <button onclick="handleLogin()" class="btn-save">Masuk</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DATA -->
 <div id="confirmModal" class="modal-overlay hidden">
     <div class="modal-content">
         <h2 id="modalTitle">Konfirmasi Data</h2>
@@ -236,8 +243,34 @@
     let dataUsdt = [], dataBtc = [];
     let livePrice = { usdtIdr: 0, btcUsdt: 0 };
     let goals = { usdt: 0, btc: 0 };
+    let isLoggedIn = false;
 
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error', err)); }
+
+    // --- UI AUTH TOGGLE ---
+    function setAuthUI(loggedIn) {
+        isLoggedIn = loggedIn;
+        const authElements = document.querySelectorAll('.auth-only');
+        const btnLogin = document.getElementById('btnLogin');
+        const btnLogout = document.getElementById('btnLogout');
+
+        if (loggedIn) {
+            authElements.forEach(el => el.classList.remove('hidden'));
+            btnLogin.classList.add('hidden');
+            btnLogout.classList.remove('hidden');
+        } else {
+            authElements.forEach(el => el.classList.add('hidden'));
+            btnLogin.classList.remove('hidden');
+            btnLogout.classList.add('hidden');
+        }
+        // Re-render tables to show/hide action column
+        renderTableUsdt();
+        renderTableBtc();
+    }
+
+    // --- AUTH LOGIC ---
+    function openLoginModal() { document.getElementById('loginModal').classList.remove('hidden'); }
+    function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
 
     async function handleLogin() {
         let username = document.getElementById('loginUser').value.trim();
@@ -247,22 +280,30 @@
         try {
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) throw error;
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            initApp(); 
+            closeLoginModal();
+            setAuthUI(true);
+            showToast("Login Berhasil!");
         } catch (error) { alert("Login Gagal: " + error.message); }
     }
+
     async function handleLogout() {
         await supabaseClient.auth.signOut();
-        document.getElementById('mainApp').classList.add('hidden');
-        document.getElementById('loginScreen').classList.remove('hidden');
+        setAuthUI(false);
+        showToast("Logout Berhasil!");
     }
+
     async function checkSession() {
         const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden'); initApp(); }
+        if (session) {
+            setAuthUI(true);
+        } else {
+            setAuthUI(false);
+        }
+        initApp();
     }
     document.addEventListener('DOMContentLoaded', checkSession);
 
+    // --- INIT & GOALS ---
     function initApp() {
         loadGoals();
         fetchData();
@@ -283,6 +324,7 @@
         showToast("Target disimpan!");
     }
 
+    // --- LIVE PRICE ---
     async function fetchLivePrices() {
         const btn = document.getElementById('btnRefresh'); btn.classList.add('loading');
         try {
@@ -296,6 +338,7 @@
         finally { btn.classList.remove('loading'); }
     }
 
+    // --- TABS & FILTERS ---
     function switchTab(tab) {
         if(tab === 'usdt') {
             document.getElementById('sectionUsdt').classList.remove('hidden'); document.getElementById('sectionBtc').classList.add('hidden');
@@ -320,6 +363,7 @@
         return data.filter(tx => tx.date && tx.date.startsWith(filterVal));
     }
 
+    // --- FETCH & RENDER DATA ---
     async function fetchData() {
         try {
             const { data } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
@@ -336,7 +380,7 @@
         const filter = document.getElementById('filterUsdt').value;
         const filtered = filterData(dataUsdt, filter);
         const tbody = document.getElementById('tableBodyUsdt');
-        tbody.innerHTML = filtered.length === 0 ? `<tr><td colspan="6" style="text-align:center;">Tidak ada data.</td></tr>` : '';
+        tbody.innerHTML = filtered.length === 0 ? `<tr><td colspan="${isLoggedIn ? 6 : 5}" style="text-align:center;">Tidak ada data.</td></tr>` : '';
         filtered.forEach(tx => {
             tbody.innerHTML += `<tr>
                 <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
@@ -344,10 +388,11 @@
                 <td style="font-family: monospace; color: #64748b; font-size: 13px;">${tx.order_id}</td>
                 <td class="text-right val-idr">Rp ${Number(tx.idr).toLocaleString('id-ID')}</td>
                 <td class="text-right val-usdt">${Number(tx.usdt).toLocaleString('id-ID', {minimumFractionDigits: 4})}</td>
-                <td><div class="action-btns">
+                ${isLoggedIn ? `<td class="auth-only"><div class="action-btns">
                     <button class="btn-edit" onclick="openModal('usdt', 'edit', ${JSON.stringify(tx).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions')"><i class="fa-solid fa-xmark"></i></button>
-                </div></td></tr>`;
+                </div></td>` : ''}
+            </tr>`;
         });
     }
 
@@ -355,7 +400,7 @@
         const filter = document.getElementById('filterBtc').value;
         const filtered = filterData(dataBtc, filter);
         const tbody = document.getElementById('tableBodyBtc');
-        tbody.innerHTML = filtered.length === 0 ? `<tr><td colspan="7" style="text-align:center;">Tidak ada data.</td></tr>` : '';
+        tbody.innerHTML = filtered.length === 0 ? `<tr><td colspan="${isLoggedIn ? 7 : 6}" style="text-align:center;">Tidak ada data.</td></tr>` : '';
         filtered.forEach(tx => {
             tbody.innerHTML += `<tr>
                 <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
@@ -364,13 +409,15 @@
                 <td class="text-right val-usdt">${Number(tx.price_btc || 0).toLocaleString('id-ID')}</td>
                 <td class="text-right val-usdt">${Number(tx.usdt_spent).toLocaleString('id-ID', {minimumFractionDigits: 4})}</td>
                 <td class="text-right val-btc">${Number(tx.btc).toLocaleString('id-ID', {minimumFractionDigits: 8})}</td>
-                <td><div class="action-btns">
+                ${isLoggedIn ? `<td class="auth-only"><div class="action-btns">
                     <button class="btn-edit" onclick="openModal('btc', 'edit', ${JSON.stringify(tx).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions_btc')"><i class="fa-solid fa-xmark"></i></button>
-                </div></td></tr>`;
+                </div></td>` : ''}
+            </tr>`;
         });
     }
 
+    // --- EXPORT CSV ---
     function exportCSV(type) {
         const filter = document.getElementById(type === 'usdt' ? 'filterUsdt' : 'filterBtc').value;
         const rawData = type === 'usdt' ? dataUsdt : dataBtc;
@@ -392,6 +439,7 @@
         showToast("Berhasil export CSV!");
     }
 
+    // --- SUMMARY ---
     function updateDashboardSummary() {
         // USDT
         let totalIdr = 0, totalUsdt = 0;
@@ -411,7 +459,6 @@
         document.getElementById('profitLossPctUsdt').innerText = (plPctUsdt >= 0 ? '+' : '') + plPctUsdt.toFixed(2) + '%';
         document.getElementById('cardPlUsdt').className = profitLossUsdt < 0 ? 'card pl negative' : 'card pl';
         
-        // Target USDT
         const pctUsdt = goals.usdt > 0 ? Math.min((totalUsdt / goals.usdt) * 100, 100) : 0;
         document.getElementById('goalProgressUsdt').style.width = pctUsdt + '%';
         document.getElementById('goalTextUsdt').innerText = `${totalUsdt.toLocaleString('id-ID', {maximumFractionDigits:2})} / ${goals.usdt.toLocaleString('id-ID')} USDT (${pctUsdt.toFixed(1)}%)`;
@@ -434,7 +481,6 @@
         document.getElementById('profitLossPctBtc').innerText = (plPctBtc >= 0 ? '+' : '') + plPctBtc.toFixed(2) + '%';
         document.getElementById('cardPlBtc').className = profitLossBtc < 0 ? 'card pl negative' : 'card pl';
 
-        // Target BTC
         const pctBtc = goals.btc > 0 ? Math.min((totalBtc / goals.btc) * 100, 100) : 0;
         document.getElementById('goalProgressBtc').style.width = pctBtc + '%';
         document.getElementById('goalTextBtc').innerText = `${totalBtc.toLocaleString('id-ID', {maximumFractionDigits:8})} / ${goals.btc} BTC (${pctBtc.toFixed(1)}%)`;
@@ -442,6 +488,8 @@
 
     // --- MODAL & CRUD ---
     function openModal(type, mode, data = null) {
+        if (!isLoggedIn) return showToast("Silakan login dulu untuk mengedit data.", true);
+        
         currentAction = { type, mode, data };
         const formContainer = document.getElementById('modalForm');
         const title = document.getElementById('modalTitle');
@@ -470,6 +518,7 @@
     function calculateUsdt() { const p=parseFloat(document.getElementById('mPrice').value)||0, b=parseFloat(document.getElementById('mBtc').value)||0, r=p*b; document.getElementById('mUsdt').value = r>0?parseFloat(r.toFixed(4)):0; }
     
     async function saveModal() {
+        if (!isLoggedIn) return;
         const date = document.getElementById('mDate').value, merchant = document.getElementById('mMerchant').value, orderId = document.getElementById('mOrderId').value;
         if (!date || !merchant || !orderId) return showToast("Semua field wajib diisi!", true);
         let payload = { date, merchant, order_id: orderId };
@@ -487,8 +536,8 @@
         } catch (error) { showToast("Error DB: " + error.message, true); }
     }
 
-    async function deleteTx(id, table) { if(confirm("Hapus transaksi ini?")) { await supabaseClient.from(table).delete().eq('id', id); showToast("Dihapus"); fetchData(); } }
-    async function clearAllData(table) { if(confirm("Hapus SEMUA data di tabel ini?")) { await supabaseClient.from(table).delete().gt('id', 0); showToast("Dibersihkan"); fetchData(); } }
+    async function deleteTx(id, table) { if(!isLoggedIn) return; if(confirm("Hapus transaksi ini?")) { await supabaseClient.from(table).delete().eq('id', id); showToast("Dihapus"); fetchData(); } }
+    async function clearAllData(table) { if(!isLoggedIn) return; if(confirm("Hapus SEMUA data di tabel ini?")) { await supabaseClient.from(table).delete().gt('id', 0); showToast("Dibersihkan"); fetchData(); } }
     function showToast(m, isErr=false) { const t=document.getElementById('toast'); t.className=isErr?'show error':'show'; t.querySelector('span').innerText=m; setTimeout(()=>t.className='',3000); }
 
     // --- UPLOAD & OCR ---
@@ -496,6 +545,7 @@
     document.getElementById('fileInputBtc').addEventListener('change', function(e) { handleFiles(this.files, 'btc'); });
 
     async function handleFiles(files, type) {
+        if (!isLoggedIn) return showToast("Silakan login dulu.", true);
         if (files.length === 0) return; const statusDiv = document.getElementById(type === 'usdt' ? 'statusTextUsdt' : 'statusTextBtc');
         statusDiv.classList.add('active'); const worker = await Tesseract.createWorker('ind+eng');
         for (let i = 0; i < files.length; i++) {
