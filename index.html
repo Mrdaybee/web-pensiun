@@ -41,7 +41,6 @@
             background-color: var(--bg); 
             color: var(--text); 
             min-height: 100vh;
-            /* Radial gradient background glows */
             background-image: 
                 radial-gradient(circle at 10% 20%, rgba(6,182,212,0.08), transparent 40%),
                 radial-gradient(circle at 90% 80%, rgba(139,92,246,0.08), transparent 40%);
@@ -52,7 +51,6 @@
         .grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
         .grad-text-btc { background: var(--grad-btc); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
         
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -233,8 +231,6 @@
         @media (max-width: 480px) {
             .dashboard { grid-template-columns: 1fr; }
         }
-   24px; }
-        }
     </style>
 </head>
 <body>
@@ -392,7 +388,8 @@
         <div class="modal-actions">
             <button onclick="closeLoginModal()" class="btn btn-ghost">Batal</button>
             <button onclick="handleLogin()" class="btn btn-primary">Masuk</button>
-        </div</div>
+        </div>
+    </div>
 </div>
 
 <!-- MODAL DATA -->
@@ -501,8 +498,9 @@
         try {
             const response = await fetch(`/api/price?t=${Date.now()}`);
             const json = await response.json();
-            livePrice.usdtIdr = json.usdtIdr || 0;
-            livePrice.btcUsdt = json.btcUsdt || 0;
+            // Paksa jadi Number biar nggak error toLocaleString
+            livePrice.usdtIdr = Number(json.usdtIdr) || 0;
+            livePrice.btcUsdt = Number(json.btcUsdt) || 0;
             updateDashboardSummary();
             showToast("Harga diupdate!");
         } catch (error) { showToast("Gagal update harga", true); }
