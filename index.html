@@ -5,207 +5,380 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Dana Pensiun</title>
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#0f172a">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#0a0a0f">
+    
+    <!-- Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-        :root { --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; --text-muted: #94a3b8; --primary: #3b82f6; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --border: #334155; --gradient-1: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%); --gradient-2: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%); --gradient-3: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); --gradient-btc: linear-gradient(135deg, #f97316 0%, #eab308 100%); }
+        /* --- DESIGN TOKENS --- */
+        :root {
+            --bg: #0a0a0f;
+            --bg-2: #11111a;
+            --card-bg: #15151f;
+            --text: #e6e6f0;
+            --text-muted: #9a9ab0;
+            --primary: #06b6d4;
+            --primary-2: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border: #24243a;
+            --grad: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
+            --grad-btc: linear-gradient(135deg, #f97316 0%, #eab308 100%);
+            --shadow: 0 10px 30px rgba(0,0,0,0.4);
+            --radius: 14px;
+        }
+
+        /* --- GLOBAL --- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: var(--text); padding: 30px 20px; min-height: 100vh; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            min-height: 100vh;
+            /* Radial gradient background glows */
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(6,182,212,0.08), transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139,92,246,0.08), transparent 40%);
+            background-attachment: fixed;
+            line-height: 1.6;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .grad-text-btc { background: var(--grad-btc); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
-        .header-left h1 { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
-        .header-left p { color: var(--text-muted); margin-top: 5px; font-size: 14px; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+
+        /* --- HEADER --- */
+        .header { 
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; 
+            padding: 20px; background: rgba(21, 21, 31, 0.6); backdrop-filter: blur(12px);
+            border: 1px solid var(--border); border-radius: var(--radius);
+        }
+        .header-left h1 { font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 12px; letter-spacing: -0.02em; }
+        .header-left p { color: var(--text-muted); margin-top: 4px; font-size: 14px; }
         .header-actions { display: flex; gap: 10px; }
-        
-        .btn-login { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .btn-login:hover { background: #2563eb; }
-        .btn-logout { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .btn-logout:hover { background: var(--danger); color: white; }
-        .btn-refresh { background: rgba(59, 130, 246, 0.1); color: var(--primary); border: 1px solid rgba(59, 130, 246, 0.2); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .btn-refresh:hover { background: var(--primary); color: white; }
-        .btn-refresh i { transition: transform 0.5s ease; }
-        .btn-refresh.loading i { animation: spin 1s infinite linear; }
+
+        /* --- BUTTONS --- */
+        .btn { border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: all 0.25s ease; font-family: 'Inter', sans-serif; }
+        .btn-primary { background: var(--grad); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(6,182,212,0.3); }
+        .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { border-color: var(--primary); color: var(--primary); background: rgba(6,182,212,0.05); }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+        .btn-success { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .btn-success:hover { background: var(--success); color: white; }
+        .btn i { transition: transform 0.5s ease; }
+        .btn.loading i { animation: spin 1s infinite linear; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        .tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-        .tab-btn { background: transparent; color: var(--text-muted); border: none; font-size: 18px; font-weight: 600; cursor: pointer; padding: 10px 20px; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
-        .tab-btn:hover { background: rgba(255,255,255,0.05); }
-        .tab-btn.active { background: var(--card-bg); color: var(--primary); border: 1px solid var(--border); }
-        .tab-btn.active-btc { background: var(--card-bg); color: #f97316; border: 1px solid var(--border); }
+        /* --- TABS --- */
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; }
+        .tab-btn { 
+            background: transparent; color: var(--text-muted); border: 1px solid transparent; 
+            font-size: 15px; font-weight: 600; cursor: pointer; padding: 12px 24px; border-radius: 10px; 
+            transition: all 0.3s; display: flex; align-items: center; gap: 8px; 
+        }
+        .tab-btn:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+        .tab-btn.active { background: var(--card-bg); color: var(--primary); border-color: var(--border); box-shadow: var(--shadow); }
+        .tab-btn.active-btc { background: var(--card-bg); color: #f97316; border-color: var(--border); box-shadow: var(--shadow); }
+
+        /* --- CARDS --- */
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .card { 
+            background: var(--card-bg); padding: 22px; border-radius: var(--radius); 
+            border: 1px solid var(--border); position: relative; overflow: hidden; 
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; 
+        }
+        .card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: var(--shadow); }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; }
+        .card.idr::before { background: var(--grad); }
+        .card.usdt::before { background: linear-gradient(135deg, #8b5cf6, #d946ef); }
+        .card.btc::before { background: var(--grad-btc); }
+        .card.tx::before { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+        .card.pl::before { background: linear-gradient(135deg, #10b981, #3b82f6); }
         
-        /* CARDS */
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .card { background: var(--card-bg); padding: 20px; border-radius: 16px; border: 1px solid var(--border); position: relative; overflow: hidden; transition: transform 0.3s ease; }
-        .card:hover { transform: translateY(-3px); }
-        .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
-        .card.idr::before { background: var(--gradient-1); }
-        .card.usdt::before { background: var(--gradient-2); }
-        .card.btc::before { background: var(--gradient-btc); }
-        .card.tx::before { background: var(--gradient-3); }
-        .card.pl::before { background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); }
-        
-        .card-title { color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-        .card-value { font-size: 22px; font-weight: 700; }
+        .card-title { color: var(--text-muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .card-value { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; letter-spacing: -0.02em; }
         .idr .card-value { color: #2dd4bf; }
         .usdt .card-value { color: #d946ef; }
         .btc .card-value { color: #f97316; }
         .tx .card-value { color: #f59e0b; }
         .pl .card-value { color: #10b981; }
-        .pl.negative .card-value { color: #ef4444; }
-        .card-sub { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+        .pl.negative .card-value { color: var(--danger); }
+        .card-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
 
-        /* GOAL & TARGET */
-        .goal-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        /* --- GOAL BOX --- */
+        .goal-box { 
+            background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); 
+            padding: 24px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 12px; 
+        }
         .goal-header { display: flex; justify-content: space-between; align-items: center; }
-        .goal-header h3 { font-size: 14px; color: var(--text-muted); }
+        .goal-header h3 { font-size: 14px; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 8px; }
         .goal-inputs { display: flex; gap: 10px; align-items: center; }
-        .goal-inputs input { background: var(--bg); border: 1px solid var(--border); color: white; padding: 8px 12px; border-radius: 8px; outline: none; width: 120px; }
-        .goal-inputs button { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        .progress-bar { width: 100%; height: 10px; background: var(--bg); border-radius: 10px; overflow: hidden; margin-top: 5px; }
-        .progress-fill { height: 100%; background: var(--gradient-1); width: 0%; transition: width 0.5s; }
-        .progress-fill.btc-goal { background: var(--gradient-btc); }
+        .goal-inputs input { 
+            background: var(--bg-2); border: 1px solid var(--border); color: var(--text); 
+            padding: 10px 14px; border-radius: 8px; outline: none; width: 140px; font-family: 'JetBrains Mono', monospace; font-size: 13px;
+            transition: all 0.2s;
+        }
+        .goal-inputs input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(6,182,212,0.15); }
+        .progress-bar { width: 100%; height: 8px; background: var(--bg-2); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+        .progress-fill { height: 100%; background: var(--grad); width: 0%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 99px; }
+        .progress-fill.btc-goal { background: var(--grad-btc); }
 
-        /* ACTION ROW */
-        .action-row { display: flex; gap: 15px; margin-bottom: 20px; }
-        .upload-section { flex: 1; background: var(--card-bg); border: 2px dashed var(--border); border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
-        .upload-section:hover { border-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
-        .upload-icon { font-size: 28px; color: var(--primary); margin-bottom: 5px; }
+        /* --- ACTION ROW --- */
+        .action-row { display: flex; gap: 16px; margin-bottom: 24px; }
+        .upload-section { 
+            flex: 1; background: var(--card-bg); border: 2px dashed var(--border); border-radius: var(--radius); 
+            padding: 30px 20px; text-align: center; cursor: pointer; transition: all 0.3s ease; 
+        }
+        .upload-section:hover { border-color: var(--primary); background: rgba(6,182,212,0.03); }
+        .upload-icon { font-size: 32px; color: var(--primary); margin-bottom: 8px; }
         input[type="file"] { display: none; }
-        .btn-manual { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 0 30px; border-radius: 16px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease; min-width: 150px; }
-        .btn-manual:hover { border-color: var(--success); color: var(--success); background: rgba(16, 185, 129, 0.05); }
+        .btn-manual { 
+            background: var(--card-bg); border: 1px solid var(--border); color: var(--text); 
+            padding: 0 30px; border-radius: var(--radius); cursor: pointer; font-size: 14px; font-weight: 600; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; 
+            transition: all 0.3s ease; min-width: 160px;
+        }
+        .btn-manual:hover { border-color: var(--success); color: var(--success); background: rgba(16, 185, 129, 0.05); transform: translateY(-2px); }
 
-        /* TABLE & TOOLS */
-        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        /* --- TABLE & TOOLS --- */
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+        .table-header h2 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
         .table-actions { display: flex; gap: 10px; align-items: center; }
-        .filter-select { background: var(--card-bg); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 8px; outline: none; }
-        .btn-export { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .btn-export:hover { background: var(--success); color: white; }
-        .btn-clear { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; }
-        .btn-clear:hover { border-color: var(--danger); color: var(--danger); }
+        .filter-select { 
+            background: var(--card-bg); border: 1px solid var(--border); color: var(--text); 
+            padding: 10px 14px; border-radius: 8px; outline: none; font-size: 13px; cursor: pointer;
+        }
+        .filter-select:focus { border-color: var(--primary); }
         
-        .table-container { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); overflow-x: auto; }
+        .table-container { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
-        th { background-color: rgba(15, 23, 42, 0.5); color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
+        th { background-color: var(--bg-2); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
         tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        
         .text-right { text-align: right; }
-        .val-idr { font-weight: 600; color: #e2e8f0; }
-        .val-usdt { font-weight: 700; color: #2dd4bf; }
-        .val-btc { font-weight: 700; color: #f97316; }
-        .val-fee { color: #94a3b8; font-size: 13px; }
+        .val-idr { font-weight: 600; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; }
+        .val-usdt { font-weight: 600; color: #2dd4bf; font-family: 'JetBrains Mono', monospace; }
+        .val-btc { font-weight: 600; color: #f97316; font-family: 'JetBrains Mono', monospace; }
+        .val-fee { color: var(--text-muted); font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+        
         .action-btns { display: flex; gap: 8px; justify-content: center; }
-        .btn-edit { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
-        .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
-        .status-text { margin-top: 10px; font-weight: 600; color: var(--primary); font-size: 12px; display: none; }
+        .btn-icon { width: 34px; height: 34px; border-radius: 8px; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 13px; }
+        .btn-edit { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .btn-edit:hover { background: var(--warning); color: white; }
+        .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .btn-delete:hover { background: var(--danger); color: white; }
+
+        .status-text { margin-top: 12px; font-weight: 600; color: var(--primary); font-size: 13px; display: none; }
         .status-text.active { display: block; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* MODAL, TOAST */
-        #toast { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; padding: 15px 25px; border-radius: 10px; z-index: 1000; transform: translateY(100px); opacity: 0; transition: 0.3s; }
-        #toast.show { transform: translateY(0); opacity: 1; }
-        #toast.error { background: var(--danger); }
+        /* --- MODAL & TOAST --- */
         .hidden { display: none !important; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .modal-content { background: var(--card-bg); width: 90%; max-width: 500px; border-radius: 16px; border: 1px solid var(--border); padding: 25px; }
-        .modal-content h2 { font-size: 20px; margin-bottom: 20px; color: var(--primary); }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px; }
-        .form-group input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 15px; border-radius: 8px; outline: none; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
-        .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-        .btn-save { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(10,10,15,0.8); backdrop-filter: blur(8px); 
+            display: flex; align-items: center; justify-content: center; z-index: 2000; 
+        }
+        .modal-content { 
+            background: var(--card-bg); width: 90%; max-width: 480px; border-radius: 16px; 
+            border: 1px solid var(--border); padding: 28px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+        .modal-content h2 { font-size: 20px; margin-bottom: 24px; color: var(--text); display: flex; align-items: center; gap: 10px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .form-group input { 
+            width: 100%; background: var(--bg-2); border: 1px solid var(--border); color: var(--text); 
+            padding: 12px 16px; border-radius: 10px; outline: none; font-family: 'JetBrains Mono', monospace; font-size: 14px;
+            transition: all 0.2s;
+        }
+        .form-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(6,182,212,0.15); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 28px; }
+
+        #toast { 
+            position: fixed; bottom: 30px; right: 30px; 
+            background: rgba(16, 185, 129, 0.15); color: var(--success); 
+            padding: 14px 24px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);
+            backdrop-filter: blur(10px); z-index: 3000; 
+            transform: translateY(100px); opacity: 0; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px;
+        }
+        #toast.show { transform: translateY(0); opacity: 1; }
+        #toast.error { background: rgba(239, 68, 68, 0.15); color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .header { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .header-actions { width: 100%; justify-content: space-between; }
+            .action-row { flex-direction: column; }
+            .btn-manual { min-width: 100%; padding: 20px; flex-direction: row; justify-content: center; }
+            .dashboard { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 480px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+   24px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container" id="mainApp">
     <div class="header">
-        <div class="header-left"><h1><i class="fa-solid fa-chart-pie" style="color: var(--primary);"></i> Aset Pensiun</h1><p>Portofolio & Analisis Keuntungan.</p></div>
+        <div class="header-left">
+            <h1><i class="fa-solid fa-chart-pie grad-text"></i> <span class="grad-text">Aset Pensiun</span></h1>
+            <p>Portofolio & Analisis Keuntungan Real-time.</p>
+        </div>
         <div class="header-actions">
-            <button class="btn-login" id="btnLogin" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Login Admin</button>
-            <button class="btn-refresh" id="btnRefresh" onclick="fetchLivePrices()"><i class="fa-solid fa-rotate-right"></i> Refresh Harga</button>
-            <button class="btn-logout hidden" id="btnLogout" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            <button class="btn btn-ghost" id="btnRefresh" onclick="fetchLivePrices()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+            <button class="btn btn-primary" id="btnLogin" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Login</button>
+            <button class="btn btn-danger hidden" id="btnLogout" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
         </div>
     </div>
 
     <div class="tabs">
         <button id="tabBtnUsdt" class="tab-btn active" onclick="switchTab('usdt')"><i class="fa-solid fa-dollar-sign"></i> Aset USDT</button>
-        <button id="tabBtnBtc" class="tab-btn" onclick="switchTab('btc')"><i class="fa-brands fa-bitcoin"></i> Aset Bitcoin (BTC)</button>
+        <button id="tabBtnBtc" class="tab-btn" onclick="switchTab('btc')"><i class="fa-brands fa-bitcoin"></i> Aset Bitcoin</button>
     </div>
 
     <!-- SECTION USDT -->
     <div id="sectionUsdt">
         <div class="dashboard">
-            <div class="card idr"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Modal</div><div class="card-value" id="totalIdr">Rp 0</div></div>
-            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-coins"></i> Total USDT</div><div class="card-value" id="totalUsdt">0 USDT</div></div>
-            <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTxUsdt">0</div></div>
-            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-tags"></i> Rata-rata Beli</div><div class="card-value" id="avgBuyUsdt">Rp 0</div></div>
-            <div class="card idr"><div class="card-title"><i class="fa-solid fa-chart-line"></i> Harga Live</div><div class="card-value" id="livePriceUsdt">Rp 0</div></div>
-            <div class="card idr"><div class="card-title"><i class="fa-solid fa-vault"></i> Nilai Saat Ini</div><div class="card-value" id="currentValueUsdt">Rp 0</div></div>
-            <div class="card pl" id="cardPlUsdt"><div class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Profit / Loss</div><div class="card-value" id="profitLossUsdt">Rp 0</div><div class="card-sub" id="profitLossPctUsdt">0%</div></div>
+            <div class="card idr"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Modal</div><div class="card-value mono" id="totalIdr">Rp 0</div></div>
+            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-coins"></i> Total USDT</div><div class="card-value mono" id="totalUsdt">0</div></div>
+            <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value mono" id="totalTxUsdt">0</div></div>
+            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-tags"></i> Rata-rata Beli</div><div class="card-value mono" id="avgBuyUsdt">Rp 0</div></div>
+            <div class="card idr"><div class="card-title"><i class="fa-solid fa-chart-line"></i> Harga Live</div><div class="card-value mono" id="livePriceUsdt">Rp 0</div></div>
+            <div class="card idr"><div class="card-title"><i class="fa-solid fa-vault"></i> Nilai Saat Ini</div><div class="card-value mono" id="currentValueUsdt">Rp 0</div></div>
+            <div class="card pl" id="cardPlUsdt"><div class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Profit / Loss</div><div class="card-value mono" id="profitLossUsdt">Rp 0</div><div class="card-sub mono" id="profitLossPctUsdt">0%</div></div>
         </div>
         
         <div class="goal-box">
-            <div class="goal-header"><h3><i class="fa-solid fa-bullseye"></i> Target USDT</h3><span id="goalTextUsdt">0 / 0 USDT (0%)</span></div>
+            <div class="goal-header">
+                <h3><i class="fa-solid fa-bullseye"></i> Target USDT</h3>
+                <span class="mono" id="goalTextUsdt" style="color: var(--primary); font-size: 13px;">0 / 0 USDT (0%)</span>
+            </div>
             <div class="progress-bar"><div class="progress-fill" id="goalProgressUsdt"></div></div>
-            <div class="goal-inputs auth-only hidden"><input type="number" id="inputGoalUsdt" placeholder="Target USDT"><button onclick="saveGoal('usdt')">Set Target</button></div>
+            <div class="goal-inputs auth-only hidden">
+                <input type="number" id="inputGoalUsdt" placeholder="Target USDT">
+                <button class="btn btn-primary" onclick="saveGoal('usdt')">Set Target</button>
+            </div>
         </div>
 
         <div class="action-row auth-only hidden">
-            <div class="upload-section" onclick="document.getElementById('fileInputUsdt').click()"><i class="fa-solid fa-cloud-arrow-up upload-icon"></i><h3>Upload Screenshot USDT</h3><input type="file" id="fileInputUsdt" accept="image/*" multiple><div class="status-text" id="statusTextUsdt"></div></div>
-            <button class="btn-manual" onclick="openModal('usdt', 'manual')"><i class="fa-solid fa-plus"></i> Tambah Manual</button>
+            <div class="upload-section" onclick="document.getElementById('fileInputUsdt').click()">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <h3 style="font-size: 16px; margin-bottom: 4px;">Upload Screenshot USDT</h3>
+                <p style="font-size: 13px; color: var(--text-muted);">Klik atau drop file di sini</p>
+                <input type="file" id="fileInputUsdt" accept="image/*" multiple>
+                <div class="status-text mono" id="statusTextUsdt"></div>
+            </div>
+            <button class="btn-manual" onclick="openModal('usdt', 'manual')">
+                <i class="fa-solid fa-plus" style="font-size: 18px;"></i> Tambah Manual
+            </button>
         </div>
         
         <div class="table-header">
-            <h2><i class="fa-solid fa-list-ul"></i> Riwayat USDT</h2>
+            <h2><i class="fa-solid fa-list-ul grad-text"></i> Riwayat USDT</h2>
             <div class="table-actions">
-                <select class="filter-select" id="filterUsdt" onchange="renderTableUsdt()"><option value="all">Semua Waktu</option></select>
-                <button class="btn-export auth-only hidden" onclick="exportCSV('usdt')"><i class="fa-solid fa-file-csv"></i> Export</button>
-                <button class="btn-clear auth-only hidden" onclick="clearAllData('transactions')"><i class="fa-solid fa-trash"></i> Hapus</button>
+                <select class="filter-select mono" id="filterUsdt" onchange="renderTableUsdt()"><option value="all">Semua Waktu</option></select>
+                <button class="btn btn-success auth-only hidden" onclick="exportCSV('usdt')"><i class="fa-solid fa-file-csv"></i> Export</button>
+                <button class="btn btn-danger auth-only hidden" onclick="clearAllData('transactions')"><i class="fa-solid fa-trash"></i> Hapus</button>
             </div>
         </div>
         <div class="table-container">
-            <table><thead><tr><th>Tanggal</th><th>Merchant</th><th>Order ID</th><th class="text-right">Nominal (IDR)</th><th class="text-right">USDT</th><th class="auth-only hidden" style="text-align: center;">Aksi</th></tr></thead><tbody id="tableBodyUsdt"></tbody></table>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Merchant</th>
+                        <th>Order ID</th>
+                        <th class="text-right">Nominal (IDR)</th>
+                        <th class="text-right">USDT</th>
+                        <th class="auth-only hidden" style="text-align: center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBodyUsdt"></tbody>
+            </table>
         </div>
     </div>
 
     <!-- SECTION BTC -->
     <div id="sectionBtc" class="hidden">
         <div class="dashboard">
-            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Modal</div><div class="card-value" id="totalUsdtSpent">0 USDT</div></div>
-            <div class="card btc"><div class="card-title"><i class="fa-brands fa-bitcoin"></i> Total BTC</div><div class="card-value" id="totalBtc">0 BTC</div></div>
-            <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value" id="totalTxBtc">0</div></div>
-            <div class="card btc"><div class="card-title"><i class="fa-solid fa-tags"></i> Rata-rata Beli</div><div class="card-value" id="avgBuyBtc">0 USDT</div></div>
-            <div class="card btc"><div class="card-title"><i class="fa-solid fa-chart-line"></i> Harga Live</div><div class="card-value" id="livePriceBtc">0 USDT</div></div>
-            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-vault"></i> Nilai Saat Ini</div><div class="card-value" id="currentValueBtc">0 USDT</div></div>
-            <div class="card pl" id="cardPlBtc"><div class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Profit / Loss</div><div class="card-value" id="profitLossBtc">0 USDT</div><div class="card-sub" id="profitLossPctBtc">0%</div></div>
+            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-wallet"></i> Total Modal</div><div class="card-value mono" id="totalUsdtSpent">0</div></div>
+            <div class="card btc"><div class="card-title"><i class="fa-brands fa-bitcoin"></i> Total BTC</div><div class="card-value mono" id="totalBtc">0</div></div>
+            <div class="card tx"><div class="card-title"><i class="fa-solid fa-receipt"></i> Total Transaksi</div><div class="card-value mono" id="totalTxBtc">0</div></div>
+            <div class="card btc"><div class="card-title"><i class="fa-solid fa-tags"></i> Rata-rata Beli</div><div class="card-value mono" id="avgBuyBtc">0</div></div>
+            <div class="card btc"><div class="card-title"><i class="fa-solid fa-chart-line"></i> Harga Live</div><div class="card-value mono" id="livePriceBtc">0</div></div>
+            <div class="card usdt"><div class="card-title"><i class="fa-solid fa-vault"></i> Nilai Saat Ini</div><div class="card-value mono" id="currentValueBtc">0</div></div>
+            <div class="card pl" id="cardPlBtc"><div class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Profit / Loss</div><div class="card-value mono" id="profitLossBtc">0</div><div class="card-sub mono" id="profitLossPctBtc">0%</div></div>
         </div>
 
         <div class="goal-box">
-            <div class="goal-header"><h3><i class="fa-solid fa-bullseye"></i> Target BTC</h3><span id="goalTextBtc">0 / 0 BTC (0%)</span></div>
+            <div class="goal-header">
+                <h3><i class="fa-solid fa-bullseye"></i> Target BTC</h3>
+                <span class="mono" id="goalTextBtc" style="color: #f97316; font-size: 13px;">0 / 0 BTC (0%)</span>
+            </div>
             <div class="progress-bar"><div class="progress-fill btc-goal" id="goalProgressBtc"></div></div>
-            <div class="goal-inputs auth-only hidden"><input type="number" step="0.00000001" id="inputGoalBtc" placeholder="Target BTC"><button onclick="saveGoal('btc')">Set Target</button></div>
+            <div class="goal-inputs auth-only hidden">
+                <input type="number" step="0.00000001" id="inputGoalBtc" placeholder="Target BTC">
+                <button class="btn btn-primary" style="background: var(--grad-btc);" onclick="saveGoal('btc')">Set Target</button>
+            </div>
         </div>
 
         <div class="action-row auth-only hidden">
-            <div class="upload-section" onclick="document.getElementById('fileInputBtc').click()"><i class="fa-solid fa-cloud-arrow-up upload-icon" style="color: #f97316;"></i><h3>Upload Screenshot BTC</h3><input type="file" id="fileInputBtc" accept="image/*" multiple><div class="status-text" id="statusTextBtc"></div></div>
-            <button class="btn-manual" onclick="openModal('btc', 'manual')" style="color: #f97316;"><i class="fa-solid fa-plus"></i> Tambah Manual</button>
+            <div class="upload-section" onclick="document.getElementById('fileInputBtc').click()">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon" style="color: #f97316;"></i>
+                <h3 style="font-size: 16px; margin-bottom: 4px;">Upload Screenshot BTC</h3>
+                <p style="font-size: 13px; color: var(--text-muted);">Klik atau drop file di sini</p>
+                <input type="file" id="fileInputBtc" accept="image/*" multiple>
+                <div class="status-text mono" id="statusTextBtc"></div>
+            </div>
+            <button class="btn-manual" onclick="openModal('btc', 'manual')" style="color: #f97316; border-color: rgba(249, 115, 22, 0.3);">
+                <i class="fa-solid fa-plus" style="font-size: 18px;"></i> Tambah Manual
+            </button>
         </div>
 
         <div class="table-header">
-            <h2><i class="fa-solid fa-list-ul"></i> Riwayat BTC</h2>
+            <h2><i class="fa-solid fa-list-ul grad-text-btc"></i> Riwayat BTC</h2>
             <div class="table-actions">
-                <select class="filter-select" id="filterBtc" onchange="renderTableBtc()"><option value="all">Semua Waktu</option></select>
-                <button class="btn-export auth-only hidden" onclick="exportCSV('btc')"><i class="fa-solid fa-file-csv"></i> Export</button>
-                <button class="btn-clear auth-only hidden" onclick="clearAllData('transactions_btc')"><i class="fa-solid fa-trash"></i> Hapus</button>
+                <select class="filter-select mono" id="filterBtc" onchange="renderTableBtc()"><option value="all">Semua Waktu</option></select>
+                <button class="btn btn-success auth-only hidden" onclick="exportCSV('btc')"><i class="fa-solid fa-file-csv"></i> Export</button>
+                <button class="btn btn-danger auth-only hidden" onclick="clearAllData('transactions_btc')"><i class="fa-solid fa-trash"></i> Hapus</button>
             </div>
         </div>
         <div class="table-container">
-            <table><thead><tr><th>Tanggal</th><th>Biaya</th><th>Order ID</th><th class="text-right">Harga</th><th class="text-right">Nominal (USDT)</th><th class="text-right">BTC</th><th class="auth-only hidden" style="text-align: center;">Aksi</th></tr></thead><tbody id="tableBodyBtc"></tbody></table>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Biaya</th>
+                        <th>Order ID</th>
+                        <th class="text-right">Harga</th>
+                        <th class="text-right">Nominal (USDT)</th>
+                        <th class="text-right">BTC</th>
+                        <th class="auth-only hidden" style="text-align: center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBodyBtc"></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -213,14 +386,13 @@
 <!-- MODAL LOGIN -->
 <div id="loginModal" class="modal-overlay hidden">
     <div class="modal-content">
-        <h2><i class="fa-solid fa-lock"></i> Login Admin</h2>
+        <h2><i class="fa-solid fa-lock grad-text"></i> Login Admin</h2>
         <div class="form-group"><label>Username</label><input type="text" id="loginUser" placeholder="mrbee"></div>
-        <div class="form-group"><label>Password</label><input type="password" id="loginPass" placeholder="********"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="loginPass" placeholder="••••••••"></div>
         <div class="modal-actions">
-            <button onclick="closeLoginModal()" class="btn-cancel">Batal</button>
-            <button onclick="handleLogin()" class="btn-save">Masuk</button>
-        </div>
-    </div>
+            <button onclick="closeLoginModal()" class="btn btn-ghost">Batal</button>
+            <button onclick="handleLogin()" class="btn btn-primary">Masuk</button>
+        </div</div>
 </div>
 
 <!-- MODAL DATA -->
@@ -228,7 +400,10 @@
     <div class="modal-content">
         <h2 id="modalTitle">Konfirmasi Data</h2>
         <div id="modalForm"></div>
-        <div class="modal-actions"><button onclick="closeModal()" class="btn-cancel">Batal</button><button onclick="saveModal()" class="btn-save">Simpan</button></div>
+        <div class="modal-actions">
+            <button onclick="closeModal()" class="btn btn-ghost">Batal</button>
+            <button onclick="saveModal()" class="btn btn-primary">Simpan</button>
+        </div>
     </div>
 </div>
 
@@ -263,7 +438,6 @@
             btnLogin.classList.remove('hidden');
             btnLogout.classList.add('hidden');
         }
-        // Re-render tables to show/hide action column
         renderTableUsdt();
         renderTableBtc();
     }
@@ -275,7 +449,7 @@
     async function handleLogin() {
         let username = document.getElementById('loginUser').value.trim();
         const password = document.getElementById('loginPass').value;
-        if (!username || !password) return alert("Isi username & password!");
+        if (!username || !password) return showToast("Isi username & password!", true);
         let email = username.includes('@') ? username : `${username}@pensiun.local`;
         try {
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -294,11 +468,8 @@
 
     async function checkSession() {
         const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            setAuthUI(true);
-        } else {
-            setAuthUI(false);
-        }
+        if (session) setAuthUI(true);
+        else setAuthUI(false);
         initApp();
     }
     document.addEventListener('DOMContentLoaded', checkSession);
@@ -380,17 +551,17 @@
         const filter = document.getElementById('filterUsdt').value;
         const filtered = filterData(dataUsdt, filter);
         const tbody = document.getElementById('tableBodyUsdt');
-        tbody.innerHTML = filtered.length === 0 ? `<tr><td colspan="${isLoggedIn ? 6 : 5}" style="text-align:center;">Tidak ada data.</td></tr>` : '';
+        tbody.innerHTML = filtered.length === 0 ? `<tr><td colspan="${isLoggedIn ? 6 : 5}" style="text-align:center; padding: 40px; color: var(--text-muted);">Tidak ada data.</td></tr>` : '';
         filtered.forEach(tx => {
             tbody.innerHTML += `<tr>
-                <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
-                <td><strong style="color: #e2e8f0;">${tx.merchant}</strong></td>
-                <td style="font-family: monospace; color: #64748b; font-size: 13px;">${tx.order_id}</td>
+                <td class="mono" style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
+                <td><strong style="color: var(--text);">${tx.merchant}</strong></td>
+                <td class="mono" style="color: var(--text-muted); font-size: 13px;">${tx.order_id}</td>
                 <td class="text-right val-idr">Rp ${Number(tx.idr).toLocaleString('id-ID')}</td>
                 <td class="text-right val-usdt">${Number(tx.usdt).toLocaleString('id-ID', {minimumFractionDigits: 4})}</td>
                 ${isLoggedIn ? `<td class="auth-only"><div class="action-btns">
-                    <button class="btn-edit" onclick="openModal('usdt', 'edit', ${JSON.stringify(tx).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions')"><i class="fa-solid fa-xmark"></i></button>
+                    <button class="btn-icon btn-edit" onclick="openModal('usdt', 'edit', ${JSON.stringify(tx).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-icon btn-delete" onclick="deleteTx(${tx.id}, 'transactions')"><i class="fa-solid fa-xmark"></i></button>
                 </div></td>` : ''}
             </tr>`;
         });
@@ -400,18 +571,18 @@
         const filter = document.getElementById('filterBtc').value;
         const filtered = filterData(dataBtc, filter);
         const tbody = document.getElementById('tableBodyBtc');
-        tbody.innerHTML = filtered.length === 0 ? `<tr><td colspan="${isLoggedIn ? 7 : 6}" style="text-align:center;">Tidak ada data.</td></tr>` : '';
+        tbody.innerHTML = filtered.length === 0 ? `<tr><td colspan="${isLoggedIn ? 7 : 6}" style="text-align:center; padding: 40px; color: var(--text-muted);">Tidak ada data.</td></tr>` : '';
         filtered.forEach(tx => {
             tbody.innerHTML += `<tr>
-                <td style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
+                <td class="mono" style="font-size: 13px; color: var(--text-muted);">${tx.date}</td>
                 <td class="val-fee">${tx.merchant}</td> 
-                <td style="font-family: monospace; color: #64748b; font-size: 13px;">${tx.order_id}</td>
+                <td class="mono" style="color: var(--text-muted); font-size: 13px;">${tx.order_id}</td>
                 <td class="text-right val-usdt">${Number(tx.price_btc || 0).toLocaleString('id-ID')}</td>
                 <td class="text-right val-usdt">${Number(tx.usdt_spent).toLocaleString('id-ID', {minimumFractionDigits: 4})}</td>
                 <td class="text-right val-btc">${Number(tx.btc).toLocaleString('id-ID', {minimumFractionDigits: 8})}</td>
                 ${isLoggedIn ? `<td class="auth-only"><div class="action-btns">
-                    <button class="btn-edit" onclick="openModal('btc', 'edit', ${JSON.stringify(tx).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn-delete" onclick="deleteTx(${tx.id}, 'transactions_btc')"><i class="fa-solid fa-xmark"></i></button>
+                    <button class="btn-icon btn-edit" onclick="openModal('btc', 'edit', ${JSON.stringify(tx).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-icon btn-delete" onclick="deleteTx(${tx.id}, 'transactions_btc')"><i class="fa-solid fa-xmark"></i></button>
                 </div></td>` : ''}
             </tr>`;
         });
@@ -496,20 +667,20 @@
         let html = ''; let valDate = data ? (data.date || '') : new Date().toISOString().slice(0, 16).replace('T', ' ');
         
         if (type === 'usdt') {
-            title.innerHTML = `<i class="fa-solid fa-dollar-sign"></i> ${mode === 'edit' ? 'Edit' : (mode === 'manual' ? 'Input Manual' : 'Konfirmasi')} USDT`;
-            html += `<div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${valDate}"></div>
-                <div class="form-group"><label>Merchant:</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : ''}"></div>
-                <div class="form-group"><label>Order ID:</label><input type="text" id="mOrderId" value="${data ? (data.order_id || '') : ''}"></div>
-                <div class="form-group"><label>Nominal (IDR):</label><input type="number" id="mIdr" value="${data ? (data.idr || 0) : 0}"></div>
-                <div class="form-group"><label>Nominal (USDT):</label><input type="number" step="0.0001" id="mUsdt" value="${data ? (data.usdt || 0) : 0}"></div>`;
+            title.innerHTML = `<i class="fa-solid fa-dollar-sign grad-text"></i> ${mode === 'edit' ? 'Edit' : (mode === 'manual' ? 'Input Manual' : 'Konfirmasi')} USDT`;
+            html += `<div class="form-group"><label>Tanggal</label><input type="text" id="mDate" value="${valDate}"></div>
+                <div class="form-group"><label>Merchant</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : ''}"></div>
+                <div class="form-group"><label>Order ID</label><input type="text" id="mOrderId" value="${data ? (data.order_id || '') : ''}"></div>
+                <div class="form-group"><label>Nominal (IDR)</label><input type="number" id="mIdr" value="${data ? (data.idr || 0) : 0}"></div>
+                <div class="form-group"><label>Nominal (USDT)</label><input type="number" step="0.0001" id="mUsdt" value="${data ? (data.usdt || 0) : 0}"></div>`;
         } else {
-            title.innerHTML = `<i class="fa-brands fa-bitcoin"></i> ${mode === 'edit' ? 'Edit' : (mode === 'manual' ? 'Input Manual' : 'Konfirmasi')} BTC`;
-            html += `<div class="form-group"><label>Tanggal:</label><input type="text" id="mDate" value="${valDate}"></div>
-                <div class="form-group"><label>Biaya (Fee):</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : ''}"></div>
-                <div class="form-group"><label>Order ID:</label><input type="text" id="mOrderId" value="${data ? (data.order_id || '') : ''}"></div>
-                <div class="form-group"><label>Harga BTC:</label><input type="number" step="0.1" id="mPrice" value="${data ? (data.price_btc || 0) : 0}" oninput="calculateUsdt()"></div>
-                <div class="form-group"><label>Nominal (USDT):</label><input type="number" step="0.0001" id="mUsdt" value="${data ? (data.usdt_spent || 0) : 0}"></div>
-                <div class="form-group"><label>Jumlah BTC:</label><input type="number" step="0.00000001" id="mBtc" value="${data ? (data.btc || 0) : 0}" oninput="calculateUsdt()"></div>`;
+            title.innerHTML = `<i class="fa-brands fa-bitcoin grad-text-btc"></i> ${mode === 'edit' ? 'Edit' : (mode === 'manual' ? 'Input Manual' : 'Konfirmasi')} BTC`;
+            html += `<div class="form-group"><label>Tanggal</label><input type="text" id="mDate" value="${valDate}"></div>
+                <div class="form-group"><label>Biaya (Fee)</label><input type="text" id="mMerchant" value="${data ? (data.merchant || '') : ''}"></div>
+                <div class="form-group"><label>Order ID</label><input type="text" id="mOrderId" value="${data ? (data.order_id || '') : ''}"></div>
+                <div class="form-group"><label>Harga BTC</label><input type="number" step="0.1" id="mPrice" value="${data ? (data.price_btc || 0) : 0}" oninput="calculateUsdt()"></div>
+                <div class="form-group"><label>Nominal (USDT)</label><input type="number" step="0.0001" id="mUsdt" value="${data ? (data.usdt_spent || 0) : 0}"></div>
+                <div class="form-group"><label>Jumlah BTC</label><input type="number" step="0.00000001" id="mBtc" value="${data ? (data.btc || 0) : 0}" oninput="calculateUsdt()"></div>`;
         }
         formContainer.innerHTML = html; document.getElementById('confirmModal').classList.remove('hidden');
     }
